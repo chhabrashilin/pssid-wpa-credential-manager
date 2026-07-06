@@ -1,0 +1,3 @@
+# Copy to inventory.ini and edit.
+[credmgr]
+credmgr.example.edu ansible_user=ubuntu

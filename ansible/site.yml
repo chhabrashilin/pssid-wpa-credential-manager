@@ -1,0 +1,14 @@
+---
+# From-scratch deploy of the pSSID Credential Manager (PRD 9.8).
+#   ansible-playbook -i inventory.ini ansible/site.yml
+- name: Deploy pSSID Credential Manager
+  hosts: credmgr
+  become: true
+  vars:
+    credmgr_hostname: "credmgr.example.edu"
+    credmgr_tls: "self-signed" # self-signed | letsencrypt | none
+    credmgr_sso_enabled: false
+    credmgr_repo_dest: /opt/pssid-credmgr
+  roles:
+    - docker
+    - credmgr

@@ -1,0 +1,21 @@
+{
+  "name": "pssid-credmgr",
+  "version": "1.0.0",
+  "private": true,
+  "description": "pSSID Credential Manager — encrypted wpa_supplicant credential & template manager",
+  "license": "MIT",
+  "workspaces": [
+    "services/server",
+    "services/client"
+  ],
+  "scripts": {
+    "dev:server": "npm --workspace services/server run dev",
+    "dev:client": "npm --workspace services/client run dev",
+    "build": "npm --workspace services/server run build && npm --workspace services/client run build",
+    "test": "npm --workspace services/server run test",
+    "lint": "npm --workspace services/server run lint"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

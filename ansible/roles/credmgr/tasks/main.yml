@@ -1,0 +1,63 @@
+---
+# Deploy the credential manager stack from the checked-out repo.
+- name: Sync repository to host
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../"
+    dest: "{{ credmgr_repo_dest }}/"
+    rsync_opts: ["--exclude=node_modules", "--exclude=.git", "--exclude=secrets", "--exclude=certs"]
+
+- name: Ensure secret/config directories exist
+  ansible.builtin.file:
+    path: "{{ credmgr_repo_dest }}/{{ item }}"
+    state: directory
+    mode: "0750"
+  loop: [secrets, config, certs]
+
+- name: Generate master key (KEK) if absent  # PRD R1
+  ansible.builtin.shell: "head -c 32 /dev/urandom > {{ credmgr_repo_dest }}/secrets/master.key"
+  args:
+    creates: "{{ credmgr_repo_dest }}/secrets/master.key"
+
+- name: Lock down master key permissions (0400)
+  ansible.builtin.file:
+    path: "{{ credmgr_repo_dest }}/secrets/master.key"
+    mode: "0400"
+
+- name: Install role map
+  ansible.builtin.copy:
+    src: "{{ credmgr_repo_dest }}/config/roles.example.json"
+    dest: "{{ credmgr_repo_dest }}/config/roles.json"
+    remote_src: true
+    force: false
+
+- name: Generate self-signed certificate
+  ansible.builtin.shell: >
+    openssl req -x509 -newkey rsa:2048 -nodes -days 825
+    -keyout {{ credmgr_repo_dest }}/certs/privkey.pem
+    -out {{ credmgr_repo_dest }}/certs/fullchain.pem
+    -subj "/CN={{ credmgr_hostname }}"
+  args:
+    creates: "{{ credmgr_repo_dest }}/certs/fullchain.pem"
+  when: credmgr_tls == "self-signed"
+
+- name: Render .env
+  ansible.builtin.copy:
+    dest: "{{ credmgr_repo_dest }}/.env"
+    mode: "0600"
+    content: |
+      PORT=8080
+      NODE_ENV=production
+      BASE_URL=https://{{ credmgr_hostname }}
+      MONGO_URL=mongodb://mongo:27017
+      MONGO_DB=credmgr
+      KEK_FILE=/run/secrets/master.key
+      ROLE_MAP_FILE=/etc/pssid-credmgr/roles.json
+      SSO_ENABLED={{ credmgr_sso_enabled | lower }}
+      OPEN_WRITE=false
+      SESSION_SECRET={{ lookup('password', '/dev/null length=44') }}
+      ROTATION_WARN_DAYS=180
+
+- name: Build and start the stack
+  ansible.builtin.command:
+    cmd: docker compose up -d --build
+    chdir: "{{ credmgr_repo_dest }}"

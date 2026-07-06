@@ -1,0 +1,6 @@
+{
+  "groups": {
+    "credmgr-admin": "write",
+    "credmgr-view": "read"
+  }
+}
