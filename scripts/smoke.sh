@@ -13,6 +13,9 @@ set -euo pipefail
 BASE="${BASE:-http://localhost:8080}"
 API="$BASE/api/v1"
 J="-H Content-Type:application/json"
+# -k: the stack fronts itself with a self-signed certificate by default, and
+# this suite asserts application behaviour, not certificate trust.
+curl() { command curl -k "$@"; }
 pass() { echo "  ✓ $1"; }
 fail() { echo "  ✗ $1" >&2; exit 1; }
 

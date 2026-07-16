@@ -55,7 +55,8 @@ Then open `https://<hostname>/`. Health: `https://<hostname>/api/health`.
 ### From-scratch (Ansible)
 
 ```bash
-cp ansible/inventory.ini.example ansible/inventory.ini   # edit host
+ansible-galaxy collection install -r ansible/requirements.yml   # once
+cp ansible/inventory.ini.example ansible/inventory.ini          # edit host
 ansible-playbook -i ansible/inventory.ini ansible/site.yml
 ```
 
@@ -78,14 +79,20 @@ KEK_FILE=secrets/master.key OPEN_WRITE=true make dev-server
 
 ## Delivering configs to probes
 
+The pSSID daemon reads one file per SSID profile
+(`/etc/wpa_supplicant/wpa_supplicant_{profile}.conf`), so define one bundle per
+profile — bundle name = GUI SSID-profile name = network name — and the pull
+tooling installs each render under the name the daemon expects
+(see [`docs/integration.md`](docs/integration.md)):
+
 ```bash
 # Ansible (idempotent — 304 on unchanged render):
 ansible-playbook -i probes.ini ansible/probe-pull-example.yml \
   -e credmgr_base=https://credmgr.example.edu \
-  -e credmgr_bundle=campus-probes -e credmgr_token=$CREDMGR_TOKEN
+  -e '{"credmgr_bundles": ["eduroam", "MWireless"]}' -e credmgr_token=$CREDMGR_TOKEN
 
-# or the shell helper:
-CREDMGR_TOKEN=xxx scripts/pssid-credmgr-pull.sh https://credmgr.example.edu campus-probes
+# or the shell helper (installs wpa_supplicant_eduroam.conf):
+CREDMGR_TOKEN=xxx scripts/pssid-credmgr-pull.sh https://credmgr.example.edu eduroam
 ```
 
 ## Backups

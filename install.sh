@@ -10,6 +10,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+# Git Bash (MSYS) rewrites arguments that look like Unix paths (e.g. the
+# openssl -subj "/CN=host") into Windows paths; disable that. No-op on Linux.
+export MSYS_NO_PATHCONV=1
+
 ASSUME_YES=false
 [[ "${1:-}" == "-y" ]] && ASSUME_YES=true
 

@@ -1,0 +1,10 @@
+# Shell scripts and Makefiles must keep LF endings everywhere: bash rejects
+# CRLF scripts ("set: pipefail: invalid option name", broken shebangs) and
+# make rejects CRLF recipes, so a Windows checkout with autocrlf enabled would
+# otherwise break the installer, the smoke suite, and the probe pull helper.
+*.sh text eol=lf
+Makefile text eol=lf
+
+# Dockerfiles build on Linux hosts regardless of the checkout platform.
+Dockerfile text eol=lf
+.dockerignore text eol=lf

@@ -4,8 +4,14 @@
 # Pulls a bundle render and installs it root:root 0600, honoring the ETag/304
 # flow so an unchanged render is a no-op.
 #
+# pSSID daemon contract: the daemon opens one file per SSID profile, named
+# /etc/wpa_supplicant/wpa_supplicant_{ssid_profile}.conf (pssid-daemon.py), so
+# the bundle name doubles as the profile name and decides the file name. The
+# wpa_supplicant service stays disabled on probes -- the daemon runs
+# pssid-80211 against the file at batch time, so no restart is needed here.
+#
 #   CREDMGR_TOKEN=xxx ./pssid-credmgr-pull.sh \
-#     https://credmgr.example.edu campus-probes
+#     https://credmgr.example.edu eduroam
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
@@ -13,8 +19,8 @@ BASE="${1:?usage: pssid-credmgr-pull.sh <base-url> <bundle>}"
 BUNDLE="${2:?usage: pssid-credmgr-pull.sh <base-url> <bundle>}"
 TOKEN="${CREDMGR_TOKEN:?set CREDMGR_TOKEN}"
 
-DEST="/etc/wpa_supplicant/wpa_supplicant.conf"
-ETAG_FILE="/etc/wpa_supplicant/.credmgr.etag"
+DEST="/etc/wpa_supplicant/wpa_supplicant_${BUNDLE}.conf"
+ETAG_FILE="/etc/wpa_supplicant/.credmgr.${BUNDLE}.etag"
 URL="$BASE/api/v1/bundles/$BUNDLE/render"
 
 install -d -m 0750 -o root -g root /etc/wpa_supplicant
@@ -41,5 +47,4 @@ fi
 install -m 0600 -o root -g root "$TMP" "$DEST"
 grep -i '^etag:' "$HDR" | awk '{print $2}' | tr -d '\r' > "$ETAG_FILE" || true
 echo "Installed $DEST ($(grep -i '^x-render-version' "$HDR" | tr -d '\r'))"
-
-command -v systemctl >/dev/null && systemctl restart wpa_supplicant || true
+echo "The pSSID daemon picks this up on its next batch run; no service restart needed."

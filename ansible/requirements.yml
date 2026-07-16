@@ -1,0 +1,10 @@
+---
+# Collections the playbooks need beyond ansible-core.
+# Install once before the first run:
+#
+#   ansible-galaxy collection install -r ansible/requirements.yml
+#
+# ansible.posix provides the synchronize module used to copy the repo to the
+# target host (roles/credmgr/tasks/main.yml).
+collections:
+  - name: ansible.posix

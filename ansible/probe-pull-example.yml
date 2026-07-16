@@ -1,20 +1,31 @@
 ---
-# Probe-side task: pull the rendered wpa_supplicant.conf for this probe class
-# from the credential manager and install it root-owned 0600 (PRD R5, 9.5).
+# Probe-side task: pull rendered wpa_supplicant configs from the credential
+# manager and install them root-owned 0600 (PRD R5, 9.5).
+#
+# pSSID daemon contract: the daemon opens ONE file per SSID profile, named
+#   /etc/wpa_supplicant/wpa_supplicant_{ssid_profile}.conf
+# (see pssid-daemon.py). So define one bundle per SSID profile (bundle name =
+# GUI SSID-profile name = credential-manager network name) and list those
+# bundles here; each render is installed under the name the daemon expects.
+# The probes' wpa_supplicant *service* stays disabled -- the daemon runs
+# pssid-80211 against the file at batch time, so no service restart is needed;
+# the next batch picks the new file up automatically.
 #
 # The ETag/304 flow means an unchanged render is a no-op (get_url only rewrites
 # when the remote content differs), so provisioning is idempotent.
 #
 #   ansible-playbook -i probes.ini probe-pull-example.yml \
 #     -e credmgr_base=https://credmgr.example.edu \
-#     -e credmgr_bundle=campus-probes \
+#     -e '{"credmgr_bundles": ["eduroam", "MWireless"]}' \
 #     -e credmgr_token=$CREDMGR_TOKEN
 - name: Provision wpa_supplicant credentials on probes
   hosts: probes
   become: true
   vars:
     credmgr_base: "https://credmgr.example.edu"
-    credmgr_bundle: "campus-probes"
+    # One bundle per SSID profile; the token must be scoped to all of them.
+    credmgr_bundles:
+      - eduroam
     # credmgr_token supplied via -e or vault; never commit it.
   tasks:
     - name: Ensure /etc/wpa_supplicant exists with tight permissions
@@ -25,20 +36,14 @@
         group: root
         mode: "0750"
 
-    - name: Pull rendered wpa_supplicant.conf
+    - name: Pull rendered config for each SSID profile
       ansible.builtin.get_url:
-        url: "{{ credmgr_base }}/api/v1/bundles/{{ credmgr_bundle }}/render"
-        dest: /etc/wpa_supplicant/wpa_supplicant.conf
+        url: "{{ credmgr_base }}/api/v1/bundles/{{ item }}/render"
+        dest: "/etc/wpa_supplicant/wpa_supplicant_{{ item }}.conf"
         headers:
           Authorization: "Bearer {{ credmgr_token }}"
         owner: root
         group: root
         mode: "0600"
         force: true
-      notify: restart wpa_supplicant
-
-  handlers:
-    - name: restart wpa_supplicant
-      ansible.builtin.service:
-        name: wpa_supplicant
-        state: restarted
+      loop: "{{ credmgr_bundles }}"

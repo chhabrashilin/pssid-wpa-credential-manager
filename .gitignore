@@ -12,8 +12,10 @@ services/client/dist/
 *.local
 master.key
 *.key
+*.pem
 !ansible/**/*.key.j2
 secrets/
+certs/
 
 # Test / coverage
 coverage/
