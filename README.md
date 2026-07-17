@@ -17,8 +17,9 @@ tests. See [`PRD`](docs/PRD.md) for the full product spec.
   (WPA-PSK, PEAP/MSCHAPv2, EAP-TLS), with envelope encryption at rest.
 - **Browser-managed Jinja templates** for `wpa_supplicant` blocks: create,
   version, validate, preview (redacted), diff.
-- **Renders** per-bundle `wpa_supplicant.conf` using **derived, non-clear-text
-  credential forms** (`psk=<64-hex>`, `password=hash:<NT hash>`).
+- **Renders** each bundle into a `wpa_supplicant` config using **derived,
+  non-clear-text credential forms** (`psk=<64-hex>`, `password=hash:<NT hash>`),
+  delivered on pSSID probes as one `wpa_supplicant_<profile>.conf` per profile.
 - **Machine-pull delivery API** with scoped, expiring bearer tokens and an
   `If-None-Match`/`304` flow for idempotent provisioning.
 - **Full audit trail** and role-based access (OIDC groups → read/write).
@@ -109,11 +110,15 @@ up `secrets/master.key` **separately** from database dumps.
 ```
 services/server   Node 18+ / Express / TypeScript API (crypto, routes, auth, audit)
 services/client   Vue 3 + Vite + Pinia SPA (served by the server in prod)
-ansible/          site.yml (deploy) + probe-pull-example.yml
+ansible/          site.yml (deploy), probe-pull-example.yml, requirements.yml
 config/           nginx.conf, roles.json (OIDC group → role map)
 scripts/          smoke.sh, backup.sh, pssid-credmgr-pull.sh
-docs/             PRD, security model, API reference
+docs/             PRD, security model, API reference, GUI/daemon integration
 ```
+
+CI (`.github/workflows/ci.yml`) runs the unit suites, both production builds,
+the Ansible/shell syntax checks, and the full end-to-end smoke against a real
+installed stack on every push and pull request.
 
 Integration with the pSSID GUI is by **convention** (a GUI SSID-profile name
 matches a credential-manager network name) — see [`docs/integration.md`](docs/integration.md).

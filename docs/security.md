@@ -59,8 +59,10 @@ otherwise.
 
 - Renders are served only over HTTPS to authenticated machine tokens.
 - Responses carry `Cache-Control: no-store`.
-- On-probe placement: `wpa_supplicant.conf` root-owned `0600`, directory
-  `/etc/wpa_supplicant` `0750` (see `ansible/probe-pull-example.yml`).
+- On-probe placement: `wpa_supplicant_<profile>.conf` root-owned `0600`,
+  directory `/etc/wpa_supplicant` `0750` — one file per SSID profile, the
+  name the pSSID daemon opens (see `ansible/probe-pull-example.yml` and
+  `docs/integration.md`).
 
 ## Tokens
 
