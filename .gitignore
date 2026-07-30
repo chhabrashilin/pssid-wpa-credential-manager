@@ -30,3 +30,6 @@ coverage/
 # Runtime
 data/
 mongo-data/
+
+# Local working notes (plans, scratch analysis) — never committed
+*.local.md
