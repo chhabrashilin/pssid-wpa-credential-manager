@@ -30,7 +30,16 @@ echo "=== pSSID Credential Manager installer ==="
 command -v docker >/dev/null || { echo "ERROR: docker is required"; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "ERROR: docker compose plugin is required"; exit 1; }
 
-HOSTNAME_VAL="$(prompt HOSTNAME "credmgr.local" "Public hostname")"
+# Hostname needs its own variable name. bash SETS $HOSTNAME itself (to the local
+# machine name) whenever it is not already in the environment, so an empty
+# $HOSTNAME can never mean "the operator has not chosen one" -- prompting on it
+# was unreachable, and an interactive install silently baked the box's own
+# hostname into BASE_URL and the TLS certificate CN.
+#
+# So: CREDMGR_HOSTNAME is the explicit override, and $HOSTNAME is demoted to the
+# suggested default. `HOSTNAME=x ./install.sh -y` keeps working (with -y the
+# default is what gets used), and an interactive run now actually asks.
+HOSTNAME_VAL="$(prompt CREDMGR_HOSTNAME "${HOSTNAME:-credmgr.local}" "Public hostname")"
 TLS="$(prompt TLS "self-signed" "TLS mode (self-signed|letsencrypt|none)")"
 SSO="$(prompt SSO "false" "Enable OIDC SSO? (true|false)")"
 
@@ -89,9 +98,63 @@ fi
 echo "Building and starting the stack..."
 docker compose up -d --build
 
+# --- Wait for the stack to actually answer -------------------------------
+# "Started the containers" is not the same as "the app works": a bad KEK, an
+# unreachable Mongo, or a bad OIDC block all leave the containers up and the API
+# dead. Reporting success without checking is how an operator finds out from a
+# browser error ten minutes later instead of from the installer.
 echo
-echo "=== Done ==="
+HEALTHY=false
+HEALTH_URL=""
+
+if ! command -v curl >/dev/null 2>&1; then
+  # No curl: skip the check rather than fail an otherwise-good install.
+  echo "NOTE: curl not found, skipping the health check."
+  echo "      Verify manually once curl is available:"
+  echo "        curl -k https://$HOSTNAME_VAL/api/health"
+  HEALTHY=true
+  HEALTH_URL="(not verified - curl is not installed)"
+else
+  # Tunable: a first run that builds images on a slow box legitimately needs
+  # longer, and CI wants to fail fast rather than sit on a dead stack.
+  HEALTH_TIMEOUT_SECS="${HEALTH_TIMEOUT_SECS:-120}"
+  attempts=$(( HEALTH_TIMEOUT_SECS / 2 ))
+  [[ "$attempts" -lt 1 ]] && attempts=1
+
+  echo -n "Waiting up to ${HEALTH_TIMEOUT_SECS}s for the API to become healthy"
+  for _ in $(seq 1 "$attempts"); do
+    # Try HTTPS first, then plain HTTP, so this works for every TLS mode.
+    for url in "https://localhost/api/health" "http://localhost/api/health"; do
+      if curl -skf --max-time 3 "$url" 2>/dev/null | grep -q '"status":"ok"'; then
+        HEALTHY=true
+        HEALTH_URL="$url"
+        break 2
+      fi
+    done
+    echo -n "."
+    sleep 2
+  done
+  echo
+fi
+
+if $HEALTHY; then
+  echo "=== Done ==="
+  [[ -n "$HEALTH_URL" ]] && echo "  Reached $HEALTH_URL"
+else
+  echo "=== Started, but the API never became healthy ==="
+  echo "The containers are up; the application is not answering. Check:"
+  echo "  docker compose ps"
+  echo "  docker compose logs --tail=50 app"
+fi
+echo
+
 echo "URL:     https://$HOSTNAME_VAL/"
 echo "Health:  https://$HOSTNAME_VAL/api/health"
-[[ "$SSO" == "false" ]] && echo "NOTE: SSO is off and OPEN_WRITE=false -> the app is READ-ONLY. Set OPEN_WRITE=true in .env for lab write access, or configure OIDC."
+if [[ "$SSO" == "false" ]]; then
+  echo "NOTE: SSO is off and OPEN_WRITE=false -> the app is READ-ONLY."
+  echo "      Set OPEN_WRITE=true in .env for lab write access, or configure OIDC."
+fi
 echo "Remember to back up secrets/master.key separately from your MongoDB dumps."
+
+# Exit non-zero on an unhealthy stack so CI and `bootstrap`-style callers notice.
+$HEALTHY

@@ -10,7 +10,7 @@ run as **root on every probe** and, before this, had **no tests at all**.
 ```
 Daemon under test: /path/to/pssid-daemon/pssid-daemon.py
 ......................................................................
-Ran 66 tests in 0.56s
+Ran 81 tests in 0.59s
 
 OK
 ```
@@ -57,7 +57,8 @@ perfSONAR installation.
 | Suite | Tests | Subject |
 |---|---|---|
 | `test_config_contract.py` | 17 | The rules `pssid_config.json` must satisfy — the daemon-side truth behind the GUI's `assertDaemonValid` |
-| `test_layer_contract.py` | 14 | The `wpa_supplicant` file contract, namespace setup, and the shell-injection surface |
+| `test_layer_contract.py` | 14 | The `wpa_supplicant` file contract, namespace setup, and argv-only helper calls |
+| `test_layer_methods.py` | 15 | Which layer 2 / layer 3 helper runs for an SSID profile's `layer2_script` / `layer3_script`, and what is refused |
 | `test_variable_substitution.py` | 14 | `$placeholder` resolution, including four genuinely surprising rules |
 | `test_scheduling.py` | 11 | Earliest-schedule-wins selection and the re-scheduling loop |
 | `test_defects.py` | 10 | Five confirmed defects, pinned |
@@ -156,18 +157,16 @@ only works when CWD happens to contain it. Run from anywhere else it raises
 
 **Fix:** resolve against `os.path.dirname(os.path.abspath(__file__))`.
 
-### Not a defect, but worth deciding on
+### Shell use
 
-Every one of the 23 `subprocess.run` calls uses `shell=True` with f-string
-interpolation of config values. `ssid_profile` and `test_interface` come from
-`pssid_config.json`, which is GUI-generated and SSH-delivered — so this is **not
-remotely reachable** and is not reported as an exploitable vulnerability. It is
-pinned in `TestShellInjectionSurface` because it makes the GUI's input validation
-load-bearing for root safety on every probe, and that ought to be a deliberate,
-tested property rather than an incidental one.
+The layer 2 / layer 3 helper calls pass an argument list with no shell, so a
+hostile `ssid_profile` or `test_interface` stays a single argument
+(`TestShellInjectionSurface`). The remaining namespace and `resolv.conf`
+commands still use `shell=True` with the interface interpolated. Those values
+come from the GUI-generated, SSH-delivered config, so this is **not remotely
+reachable**, but the GUI's validation is still the only guard for them.
 
-**Fix, in order of value:** argument lists with `shell=False`; failing that,
-`shlex.quote` on every interpolated value.
+**Fix:** convert those calls to argument lists as well.
 
 ---
 
@@ -202,6 +201,7 @@ harness/
 tests/
   test_config_contract.py
   test_layer_contract.py
+  test_layer_methods.py
   test_variable_substitution.py
   test_scheduling.py
   test_defects.py

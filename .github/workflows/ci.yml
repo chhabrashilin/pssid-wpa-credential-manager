@@ -61,6 +61,67 @@ jobs:
           bash -n install.sh
           for f in scripts/*.sh; do bash -n "$f"; done
 
+      # A script committed without its executable bit fails only at run time,
+      # with "Permission denied" (exit 126) and no hint that the mode is the
+      # cause -- which is exactly how the smoke job broke. Checking the mode in
+      # git (not on disk) catches it on the PR that introduces it, and works
+      # even when the contributor's checkout has core.fileMode=false, as it does
+      # on Windows.
+      - name: Entry-point scripts must be executable
+        run: |
+          missing=0
+          for f in install.sh scripts/backup.sh scripts/restore.sh \
+                   scripts/pssid-credmgr-pull.sh scripts/smoke.sh; do
+            mode="$(git ls-files -s -- "$f" | awk '{print $1}')"
+            if [ "$mode" != "100755" ]; then
+              echo "::error file=$f::$f is mode ${mode:-missing}, expected 100755."
+              echo "  Fix with: git update-index --chmod=+x $f"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] && echo "All entry-point scripts are executable."
+          exit "$missing"
+
+      # Exercises install.sh against stub docker/curl: argument handling, .env
+      # contents, KEK generation, idempotence, and the unhealthy-stack exit
+      # code. Runs in seconds, so installer regressions surface here rather
+      # than in the slow end-to-end job below.
+      - name: Installer regression suite
+        run: bash scripts/test-install.sh
+
+  projects:
+    name: Ecosystem projects (hygiene, daemon tests, probe health)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # jinja2 is the only third-party dependency across all five projects,
+      # and only pssid-daemon-tests needs it (the daemon imports it at module
+      # scope). Everything else is standard library on purpose.
+      - name: Install jinja2
+        run: python -m pip install --quiet jinja2
+
+      # pssid-daemon-tests runs against the real daemon source. It is a
+      # separate repository, so check it out beside this one; the harness finds
+      # it there by default and skips cleanly if it is absent.
+      - name: Check out pssid-daemon
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: UMNET-perfSONAR/pssid-daemon
+          path: _pssid-daemon
+
+      - name: Run every project suite
+        env:
+          PSSID_DAEMON_PATH: ${{ github.workspace }}/_pssid-daemon/pssid-daemon.py
+        run: bash projects/run-all.sh
+
+      - name: Probe-health demo (end-to-end on real files)
+        run: bash projects/pssid-probe-health/demo.sh
+
   smoke:
     name: End-to-end smoke (full stack)
     runs-on: ubuntu-latest
@@ -68,8 +129,11 @@ jobs:
       - uses: actions/checkout@v4
       # The installer generates the KEK, certs, and .env, then builds and
       # starts the stack; the smoke suite needs write access (lab mode).
+      # CREDMGR_HOSTNAME, not HOSTNAME: bash sets $HOSTNAME itself, so it can
+      # never be distinguished from a value the operator chose. The legacy
+      # HOSTNAME= spelling still works and is covered by scripts/test-install.sh.
       - name: Install (non-interactive, self-signed)
-        run: HOSTNAME=localhost TLS=self-signed SSO=false ./install.sh -y
+        run: CREDMGR_HOSTNAME=localhost TLS=self-signed SSO=false ./install.sh -y
       - name: Enable lab write mode for the suite
         run: |
           sed -i 's/^OPEN_WRITE=false/OPEN_WRITE=true/' .env
@@ -83,8 +147,28 @@ jobs:
           echo "Stack never became healthy"; exit 1
       - name: Run the end-to-end smoke suite
         run: BASE=https://localhost bash scripts/smoke.sh
+      # Diagnostics only: every command here is best-effort. Without the guards
+      # this step fails on its own (e.g. `docker compose ps` exits 1 with "env
+      # file .env not found" when the installer died before writing it), which
+      # adds a second, louder red X that buries the real one.
       - name: Show container state and logs on failure
         if: failure()
+        continue-on-error: true
         run: |
-          docker compose ps
-          docker compose logs --tail=200
+          echo "::group::Working tree"
+          ls -la
+          echo "--- .env present? ---"
+          [ -f .env ] && echo "yes" || echo "NO - the installer did not get far enough to write it"
+          echo "::endgroup::"
+
+          echo "::group::Script modes in git"
+          git ls-files -s -- '*.sh' || true
+          echo "::endgroup::"
+
+          echo "::group::Containers"
+          docker compose ps || docker ps -a || true
+          echo "::endgroup::"
+
+          echo "::group::Logs"
+          docker compose logs --tail=200 || true
+          echo "::endgroup::"

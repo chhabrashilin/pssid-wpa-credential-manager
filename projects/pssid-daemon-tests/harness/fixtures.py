@@ -54,6 +54,9 @@ def ssid_profile(name: str = "MWireless", ssid: str | None = None, **extra: Any)
         "test_level": "SSID",
         "bssid_scan": "Disabled",
         "min_signal": -79,
+        # The GUI requires both methods on every profile; these are its starters.
+        "layer2_script": "wpa_supplicant",
+        "layer3_script": "dhcp_client",
     }
     profile.update(extra)
     return profile

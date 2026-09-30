@@ -10,6 +10,7 @@ test from the module-level state the daemon accumulates.
 from __future__ import annotations
 
 import os
+import shlex
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
@@ -70,9 +71,9 @@ class DaemonTestCase(unittest.TestCase):
         """
         Replace ``subprocess.run`` inside the daemon module.
 
-        The daemon shells out for every namespace and layer operation, always
-        with ``shell=True``. Capturing the command STRINGS is how we assert on
-        the contract with ``pssid-80211`` / ``pssid-dhcp`` without a probe.
+        The daemon shells out for every namespace and layer operation. Capturing
+        the commands is how we assert on the contract with the layer 2 / layer 3
+        helpers without a probe.
         """
         result = mock.Mock()
         result.returncode = returncode
@@ -83,8 +84,17 @@ class DaemonTestCase(unittest.TestCase):
             yield run
 
     def commands_from(self, run_mock: mock.Mock) -> list[str]:
-        """Every shell command string passed to the mocked ``subprocess.run``."""
-        return [c.args[0] for c in run_mock.call_args_list if c.args]
+        """
+        Every command passed to the mocked ``subprocess.run``, as a string.
+
+        Layer helpers are run with an argument list, which is rendered with
+        ``shlex.join`` so string assertions work for both forms.
+        """
+        return [
+            c.args[0] if isinstance(c.args[0], str) else shlex.join(c.args[0])
+            for c in run_mock.call_args_list
+            if c.args
+        ]
 
     def assertSyslogContains(self, needle: str) -> None:
         text = stubs.syslog_text()

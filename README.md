@@ -45,8 +45,17 @@ limitations.
 ```bash
 ./install.sh            # interactive: hostname, TLS, SSO; generates KEK + certs + .env
 # or non-interactive:
-HOSTNAME=credmgr.local TLS=self-signed SSO=false ./install.sh -y
+CREDMGR_HOSTNAME=credmgr.local TLS=self-signed SSO=false ./install.sh -y
 ```
+
+The installer waits for `/api/health` to answer before reporting success, and
+exits non-zero if the stack comes up but the API does not. Tune the wait with
+`HEALTH_TIMEOUT_SECS` (default 120).
+
+> **Hostname variable:** use `CREDMGR_HOSTNAME`. Plain `HOSTNAME` is still
+> honoured as the *default* for backward compatibility, but bash sets
+> `$HOSTNAME` itself, so it cannot be distinguished from a value you chose —
+> which is why it is only a suggestion and `CREDMGR_HOSTNAME` wins.
 
 Then open `https://<hostname>/`. Health: `https://<hostname>/api/health`.
 
@@ -99,20 +108,29 @@ CREDMGR_TOKEN=xxx scripts/pssid-credmgr-pull.sh https://credmgr.example.edu edur
 ## Backups
 
 ```bash
-scripts/backup.sh ./backups
+scripts/backup.sh ./backups                              # dump (refuses to write an empty one)
+scripts/restore.sh ./backups/credmgr-<stamp>.archive.gz  # restore, with confirmation
 ```
 
 The dump contains only encrypted payloads — **useless without the KEK**. Back
 up `secrets/master.key` **separately** from database dumps.
 
+`backup.sh` reads `MONGO_DB` from `.env` and refuses to write an archive when
+the database has no collections, because `mongodump` exits 0 on a database that
+does not exist — an empty archive reported as success is the worst possible
+backup outcome. `restore.sh` refuses to run without `secrets/master.key`
+present: restoring against the wrong KEK yields a database that loads perfectly
+and decrypts nothing. Confirm a restore by checking that a credential
+fingerprint is unchanged.
+
 ## Architecture
 
 ```
-services/server   Node 18+ / Express / TypeScript API (crypto, routes, auth, audit)
+services/server   Node 20 / Express / TypeScript API (crypto, routes, auth, audit)
 services/client   Vue 3 + Vite + Pinia SPA (served by the server in prod)
 ansible/          site.yml (deploy), probe-pull-example.yml, requirements.yml
 config/           nginx.conf, roles.json (OIDC group → role map)
-scripts/          smoke.sh, backup.sh, pssid-credmgr-pull.sh
+scripts/          smoke.sh, test-install.sh, backup.sh, restore.sh, pssid-credmgr-pull.sh
 docs/             PRD, security model, API reference, GUI/daemon integration
 ```
 

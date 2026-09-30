@@ -144,7 +144,7 @@ class TestReschedulingLoop(DaemonTestCase):
         order = []
 
         with mock.patch.object(
-            self.daemon, "execute_batch", side_effect=lambda b: order.append("execute")
+            self.daemon, "execute_batch", side_effect=lambda b, d: order.append("execute")
         ):
             with mock.patch.object(
                 self.daemon,

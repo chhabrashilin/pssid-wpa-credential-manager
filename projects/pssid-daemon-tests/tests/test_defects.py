@@ -183,16 +183,14 @@ class TestD3_SysExitMissingParentheses(DaemonTestCase):
     Fix: ``sys.exit(1)``.
     """
 
-    def test_line_319_is_a_bare_sys_exit(self):
+    def test_there_is_a_bare_sys_exit(self):
+        # Matched by content, not line number, so unrelated edits above it
+        # do not break the pin.
         source = loader.daemon_path().read_text(encoding="utf-8").splitlines()
-        bare = [
-            (n, line.strip())
-            for n, line in enumerate(source, 1)
-            if line.strip() == "sys.exit"
-        ]
+        bare = [line.strip() for line in source if line.strip() == "sys.exit"]
         self.assertEqual(
             bare,
-            [(319, "sys.exit")],
+            ["sys.exit"],
             "D3 appears to be FIXED -- no bare `sys.exit` remains.",
         )
 

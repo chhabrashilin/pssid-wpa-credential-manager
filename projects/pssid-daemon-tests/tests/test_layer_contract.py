@@ -10,8 +10,9 @@ it opens, ``scripts/pssid-credmgr-pull.sh`` and
 
 The layer tools (``pssid-80211``, ``pssid-dhcp``) live in
 ``ansible-role-pssid-VT-tools`` and are not installed here, so every assertion is
-made against the shell command STRING the daemon builds, captured by patching
-``subprocess.run``.
+made against the command the daemon builds, captured by patching
+``subprocess.run``. Which helper runs for a given SSID profile is covered in
+``test_layer_methods``; here the helpers are passed in directly.
 """
 
 from __future__ import annotations
@@ -21,6 +22,12 @@ import tempfile
 from unittest import mock
 
 from harness import DaemonTestCase, fixtures
+
+#: Resolved helpers, as ``get_layer_helpers`` returns them.
+HELPERS = {
+    "layer2": "/usr/lib/exec/pssid/pssid-80211",
+    "layer3": "/usr/lib/exec/pssid/pssid-dhcp",
+}
 
 
 class TestWpaSupplicantFileContract(DaemonTestCase):
@@ -54,7 +61,7 @@ class TestWpaSupplicantFileContract(DaemonTestCase):
 
         with self.fake_subprocess() as run:
             with mock.patch.object(self.daemon.os.path, "exists", return_value=False):
-                result = self.daemon.process_on_layer_2(batch, "eduroam")
+                result = self.daemon.process_on_layer_2(batch, "eduroam", HELPERS)
 
         self.assertIsNone(result)
         # Nothing was executed: no wpa_supplicant, no layer 3, nothing.
@@ -69,7 +76,7 @@ class TestWpaSupplicantFileContract(DaemonTestCase):
         with self.fake_subprocess() as run:
             with mock.patch.object(self.daemon.os.path, "exists", return_value=True):
                 with mock.patch.object(self.daemon, "process_on_layer_3"):
-                    self.daemon.process_on_layer_2(batch, "eduroam")
+                    self.daemon.process_on_layer_2(batch, "eduroam", HELPERS)
 
         commands = self.commands_from(run)
         self.assertTrue(commands, "expected the daemon to shell out")
@@ -84,7 +91,7 @@ class TestWpaSupplicantFileContract(DaemonTestCase):
         with self.fake_subprocess() as run:
             with mock.patch.object(self.daemon.os.path, "exists", return_value=True):
                 with mock.patch.object(self.daemon, "process_on_layer_3"):
-                    self.daemon.process_on_layer_2(batch, "eduroam")
+                    self.daemon.process_on_layer_2(batch, "eduroam", HELPERS)
 
         self.assertIn("ip netns exec pssid_wlan0", self.commands_from(run)[0])
 
@@ -94,7 +101,7 @@ class TestWpaSupplicantFileContract(DaemonTestCase):
         with self.fake_subprocess() as run:
             with mock.patch.object(self.daemon.os.path, "exists", return_value=True):
                 with mock.patch.object(self.daemon, "process_on_layer_3"):
-                    self.daemon.process_on_layer_2(batch, "eduroam")
+                    self.daemon.process_on_layer_2(batch, "eduroam", HELPERS)
 
         commands = self.commands_from(run)
         teardown = [c for c in commands if c.rstrip().endswith("-d")]
@@ -113,7 +120,7 @@ class TestWpaSupplicantFileContract(DaemonTestCase):
         with self.fake_subprocess() as run:
             with mock.patch.object(self.daemon.os.path, "exists", return_value=True):
                 with mock.patch.object(self.daemon, "process_on_layer_3"):
-                    self.daemon.process_on_layer_2(batch, "eduroam")
+                    self.daemon.process_on_layer_2(batch, "eduroam", HELPERS)
 
         joined = " ".join(self.commands_from(run))
         for forbidden in ("systemctl", "service ", "wpa_cli", "reboot"):
@@ -126,17 +133,22 @@ class TestWpaSupplicantFileContract(DaemonTestCase):
         manager's convention is one bundle per profile.
         """
         batch = fixtures.batch(ssid_profiles=["eduroam", "MWireless"])
+        cfg = fixtures.config_with(
+            ssid_profiles=[fixtures.ssid_profile("eduroam"), fixtures.ssid_profile("MWireless")],
+            batches=[batch],
+        )
         seen = []
 
         with self.fake_subprocess():
             with mock.patch.object(self.daemon.os.path, "exists", return_value=True):
-                with mock.patch.object(self.daemon, "setup_netns"):
-                    with mock.patch.object(
-                        self.daemon,
-                        "process_on_layer_2",
-                        side_effect=lambda b, s: seen.append(s),
-                    ):
-                        self.daemon.execute_batch(batch)
+                with mock.patch.object(self.daemon, "get_layer_helpers", return_value=HELPERS):
+                    with mock.patch.object(self.daemon, "setup_netns"):
+                        with mock.patch.object(
+                            self.daemon,
+                            "process_on_layer_2",
+                            side_effect=lambda b, s, h: seen.append(s),
+                        ):
+                            self.daemon.execute_batch(batch, cfg)
 
         self.assertEqual(seen, ["eduroam", "MWireless"])
 
@@ -149,7 +161,7 @@ class TestNamespaceSetup(DaemonTestCase):
 
         with self.fake_subprocess(returncode=0, stdout="wlan1") as run:
             with mock.patch.object(self.daemon.os.path, "exists", return_value=False):
-                self.daemon.setup_netns(batch, "eduroam")
+                self.daemon.setup_netns(batch, "eduroam", HELPERS)
 
         self.assertIn("pssid_wlan1", " ".join(self.commands_from(run)))
 
@@ -159,7 +171,7 @@ class TestNamespaceSetup(DaemonTestCase):
 
         with self.fake_subprocess(returncode=0, stdout="wlan0") as run:
             with mock.patch.object(self.daemon.os.path, "exists", return_value=False):
-                self.daemon.setup_netns(batch, "eduroam")
+                self.daemon.setup_netns(batch, "eduroam", HELPERS)
 
         self.assertNotIn("ip netns add", " ".join(self.commands_from(run)))
 
@@ -172,7 +184,7 @@ class TestNamespaceSetup(DaemonTestCase):
 
         with self.fake_subprocess(returncode=0, stdout="pids") as run:
             with mock.patch.object(self.daemon.os.path, "exists", return_value=False):
-                self.daemon.setup_netns(batch, "eduroam")
+                self.daemon.setup_netns(batch, "eduroam", HELPERS)
 
         dhcp = [c for c in self.commands_from(run) if "pssid-dhcp" in c]
         self.assertTrue(dhcp)
@@ -181,54 +193,63 @@ class TestNamespaceSetup(DaemonTestCase):
 
 class TestShellInjectionSurface(DaemonTestCase):
     """
-    **Security characterisation: profile names reach a root shell unescaped.**
+    **Layer helpers are run from an argument list, never through a shell.**
 
-    The daemon builds every command by f-string interpolation and runs it with
-    ``shell=True`` (23 call sites). ``ssid_profile`` and ``test_interface`` come
-    straight from ``pssid_config.json``, which is generated by the GUI and
-    delivered over SSH -- so this is not remotely reachable today, and it is
-    NOT being reported as an exploitable vulnerability.
+    ``ssid_profile`` and ``test_interface`` come straight from
+    ``pssid_config.json``. The layer 2 / layer 3 helper calls pass them as
+    single argv elements with no shell, so a hostile value cannot become a
+    second command. ``pssid-gui2``'s server README makes this the daemon's
+    responsibility.
 
-    It is being pinned because it makes the GUI's input validation
-    load-bearing for root safety on every probe, which is a property that should
-    be deliberate and tested rather than incidental. ``pssid-gui2`` does validate
-    (``isValidRfc1123Name``, ``isValidSsidName`` in
-    ``ssid_profiles.controllers.ts``); the daemon trusts it completely.
-
-    Fix, in order of value: pass argument LISTS with ``shell=False``; failing
-    that, ``shlex.quote`` every interpolated value.
+    The namespace/resolv.conf commands (``ip netns``, ``iw``, ``cp``, ``rm``)
+    still use ``shell=True`` with the interface interpolated; the GUI's
+    validation remains the guard there.
     """
 
-    def test_profile_name_is_interpolated_into_the_shell_string_unescaped(self):
+    def test_hostile_profile_name_stays_a_single_argument(self):
         batch = fixtures.batch(test_interface="wlan0")
         hostile = "eduroam; touch /tmp/pwned"
 
         with self.fake_subprocess() as run:
             with mock.patch.object(self.daemon.os.path, "exists", return_value=True):
                 with mock.patch.object(self.daemon, "process_on_layer_3"):
-                    self.daemon.process_on_layer_2(batch, hostile)
+                    self.daemon.process_on_layer_2(batch, hostile, HELPERS)
 
-        command = self.commands_from(run)[0]
-        self.assertIn("; touch /tmp/pwned", command)
-        # And it really is handed to a shell.
-        self.assertTrue(run.call_args_list[0].kwargs.get("shell"))
+        argv = run.call_args_list[0].args[0]
+        self.assertIsInstance(argv, list)
+        self.assertIn(f"/etc/wpa_supplicant/wpa_supplicant_{hostile}.conf", argv)
+        self.assertFalse(run.call_args_list[0].kwargs.get("shell", False))
 
-    def test_interface_name_is_also_interpolated(self):
+    def test_hostile_interface_name_stays_a_single_argument(self):
         batch = fixtures.batch(test_interface="wlan0; id")
 
         with self.fake_subprocess() as run:
             with mock.patch.object(self.daemon.os.path, "exists", return_value=True):
                 with mock.patch.object(self.daemon, "process_on_layer_3"):
-                    self.daemon.process_on_layer_2(batch, "eduroam")
+                    self.daemon.process_on_layer_2(batch, "eduroam", HELPERS)
 
-        self.assertIn("; id", self.commands_from(run)[0])
+        argv = run.call_args_list[0].args[0]
+        self.assertIn("wlan0; id", argv)
+        self.assertFalse(run.call_args_list[0].kwargs.get("shell", False))
 
-    def test_every_subprocess_call_uses_shell_true(self):
-        """If a future change introduces a list form, this test should be updated."""
-        source = self.daemon.__file__
-        with open(source, "r", encoding="utf-8") as fh:
-            text = fh.read()
-        self.assertEqual(text.count("subprocess.run"), text.count("shell=True"))
+    def test_no_helper_call_uses_a_shell(self):
+        batch = fixtures.batch(test_interface="wlan0")
+
+        with self.fake_subprocess(stdout="pids") as run:
+            with mock.patch.object(self.daemon.os.path, "exists", return_value=True):
+                with mock.patch.object(self.daemon, "run_batch_processor"):
+                    self.daemon.setup_netns(batch, "eduroam", HELPERS)
+                    self.daemon.process_on_layer_2(batch, "eduroam", HELPERS)
+
+        helper_calls = [
+            c for c, command in zip(run.call_args_list, self.commands_from(run))
+            if any(h in command for h in HELPERS.values())
+        ]
+        # setup_netns teardown x2, then build/teardown for layer 2 and layer 3
+        self.assertEqual(len(helper_calls), 6)
+        for c in helper_calls:
+            self.assertIsInstance(c.args[0], list)
+            self.assertFalse(c.kwargs.get("shell", False))
 
 
 class TestRealConfigFileLoads(DaemonTestCase):

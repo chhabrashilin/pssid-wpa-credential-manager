@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
 
-.PHONY: help install build dev test smoke up down logs clean genkey
+.PHONY: help install build dev test test-install smoke backup restore up down logs clean genkey
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -26,8 +26,17 @@ dev-client: ## Run the Vite client dev server
 test: ## Run the mandatory Vitest suites (crypto, derivation, authz, template)
 	npm test
 
+test-install: ## Exercise install.sh against stub docker/curl (no daemon needed)
+	bash scripts/test-install.sh
+
 smoke: ## Walk the full user journey against a running stack
 	bash scripts/smoke.sh
+
+backup: ## Dump the database (refuses to write an empty archive)
+	bash scripts/backup.sh ./backups
+
+restore: ## Restore from an archive: make restore ARCHIVE=./backups/<file>.gz
+	bash scripts/restore.sh $(ARCHIVE)
 
 genkey: ## Generate a fresh 256-bit master KEK (prints to stdout)
 	@node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
