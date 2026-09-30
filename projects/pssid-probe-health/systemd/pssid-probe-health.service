@@ -1,0 +1,42 @@
+[Unit]
+Description=pSSID probe health report
+Documentation=https://github.com/UMNET-perfSONAR
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+
+# Root is needed to read /etc/wpa_supplicant (0750) and to stat the 0600
+# credential files. The reporter never reads their CONTENT -- only existence,
+# size and mode -- but it cannot even stat them unprivileged.
+User=root
+
+Environment=PSSID_HEALTH_COLLECTOR=
+EnvironmentFile=-/etc/pssid/health.env
+
+ExecStart=/usr/local/bin/pssid-probe-health --quiet ${PSSID_HEALTH_ARGS}
+
+# A probe that reports "not testing" must not look like a failed unit -- the
+# report succeeded, and that is what this unit does. Exit 1 (warnings) and 2
+# (critical) are successful RUNS with an unhealthy verdict; the verdict travels
+# in the report, not in the unit state.
+SuccessExitStatus=0 1 2
+
+# The reporter reads a handful of files and optionally makes one HTTPS request.
+# Nothing here needs to write to the filesystem.
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

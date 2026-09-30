@@ -1,0 +1,30 @@
+# Drop-in GitHub Actions job for repo hygiene.
+#
+# Copy this into .github/workflows/ in any repository, or copy the single
+# "hygiene" job into an existing workflow. Needs only git and bash.
+name: Repo hygiene
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  hygiene:
+    name: File modes, line endings, shell syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Optional. The checker skips static analysis cleanly when it is absent,
+      # so this step failing must never fail the job.
+      - name: Install shellcheck (optional)
+        continue-on-error: true
+        run: sudo apt-get update -qq && sudo apt-get install -y shellcheck
+
+      - name: Check repository hygiene
+        run: bash projects/repo-hygiene/check-repo-hygiene.sh .
+
+      # Proves the checker itself still works. Cheap, and it means a change to
+      # the detection logic cannot silently stop detecting.
+      - name: Self-test the checker
+        run: bash projects/repo-hygiene/self-test.sh

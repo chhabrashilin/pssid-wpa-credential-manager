@@ -1,0 +1,18 @@
+[Unit]
+Description=Report pSSID probe health periodically
+Documentation=https://github.com/UMNET-perfSONAR
+
+[Timer]
+# Every 15 minutes. Frequent enough that a probe which stops testing is noticed
+# within one batch interval on most schedules, cheap enough to be free.
+OnBootSec=2min
+OnUnitActiveSec=15min
+
+# Spread the fleet out. Without this, every probe reports in the same second
+# and a collector sees a thundering herd instead of a steady trickle.
+RandomizedDelaySec=120
+
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -8,3 +8,9 @@ Makefile text eol=lf
 # Dockerfiles build on Linux hosts regardless of the checkout platform.
 Dockerfile text eol=lf
 .dockerignore text eol=lf
+
+# Python and the extensionless launcher ship to Linux probes; a CRLF shebang
+# fails there with a confusing "no such file or directory" naming the
+# interpreter. Pin them the same way *.sh is pinned.
+*.py text eol=lf
+projects/pssid-probe-health/pssid-probe-health text eol=lf
