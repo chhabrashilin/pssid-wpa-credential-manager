@@ -89,38 +89,12 @@ jobs:
       - name: Installer regression suite
         run: bash scripts/test-install.sh
 
-  projects:
-    name: Ecosystem projects (hygiene, daemon tests, probe health)
+  hygiene:
+    name: Repository hygiene (file modes, line endings, shell syntax)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      # jinja2 is the only third-party dependency across all five projects,
-      # and only pssid-daemon-tests needs it (the daemon imports it at module
-      # scope). Everything else is standard library on purpose.
-      - name: Install jinja2
-        run: python -m pip install --quiet jinja2
-
-      # pssid-daemon-tests runs against the real daemon source. It is a
-      # separate repository, so check it out beside this one; the harness finds
-      # it there by default and skips cleanly if it is absent.
-      - name: Check out pssid-daemon
-        uses: actions/checkout@v4
-        continue-on-error: true
-        with:
-          repository: UMNET-perfSONAR/pssid-daemon
-          path: _pssid-daemon
-
-      - name: Run every project suite
-        env:
-          PSSID_DAEMON_PATH: ${{ github.workspace }}/_pssid-daemon/pssid-daemon.py
-        run: bash projects/run-all.sh
-
-      - name: Probe-health demo (end-to-end on real files)
-        run: bash projects/pssid-probe-health/demo.sh
+      - uses: chhabrashilin/pssid-repo-hygiene@v1
 
   smoke:
     name: End-to-end smoke (full stack)

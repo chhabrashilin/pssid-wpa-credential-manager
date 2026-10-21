@@ -34,6 +34,6 @@ mongo-data/
 # Local working notes (plans, scratch analysis) - never committed
 *.local.md
 
-# Python bytecode (projects/)
+# Python bytecode
 __pycache__/
 *.py[cod]

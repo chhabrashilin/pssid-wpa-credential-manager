@@ -141,6 +141,15 @@ installed stack on every push and pull request.
 Integration with the pSSID GUI is by **convention** (a GUI SSID-profile name
 matches a credential-manager network name) - see [`docs/integration.md`](docs/integration.md).
 
+## Related repositories
+
+| Repository | What it is |
+|---|---|
+| [pssid-gui2](https://github.com/UMNET-perfSONAR/pssid-gui2) | Generates the `pssid_config.json` whose SSID profiles name the networks this app manages |
+| [pssid-daemon](https://github.com/UMNET-perfSONAR/pssid-daemon) | Runs on each probe and reads `/etc/wpa_supplicant/wpa_supplicant_<profile>.conf` |
+| [pssid-probe-health](https://github.com/chhabrashilin/pssid-probe-health) | On-probe check that every profile's conf was actually delivered |
+| [pssid-repo-hygiene](https://github.com/chhabrashilin/pssid-repo-hygiene) | The file-mode and line-ending checks this repository's CI runs |
+
 ## License
 
 MIT
