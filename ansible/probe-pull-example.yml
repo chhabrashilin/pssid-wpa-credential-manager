@@ -11,8 +11,10 @@
 # pssid-80211 against the file at batch time, so no service restart is needed;
 # the next batch picks the new file up automatically.
 #
-# The ETag/304 flow means an unchanged render is a no-op (get_url only rewrites
-# when the remote content differs), so provisioning is idempotent.
+# The render's ETag is the first 8 hex chars of the SHA-256 of its body, so
+# If-None-Match is computed from the file already on the probe. An unchanged
+# render answers 304 with no body (the secret is not re-sent), the task
+# reports "ok", and a deleted or hand-edited file is simply pulled again.
 #
 #   ansible-playbook -i probes.ini probe-pull-example.yml \
 #     -e credmgr_base=https://credmgr.example.edu \
@@ -27,6 +29,8 @@
     credmgr_bundles:
       - eduroam
     # credmgr_token supplied via -e or vault; never commit it.
+    # Set to false only for a lab manager with a self-signed certificate.
+    credmgr_validate_certs: true
   tasks:
     - name: Ensure /etc/wpa_supplicant exists with tight permissions
       ansible.builtin.file:
@@ -36,14 +40,31 @@
         group: root
         mode: "0750"
 
-    - name: Pull rendered config for each SSID profile
-      ansible.builtin.get_url:
-        url: "{{ credmgr_base }}/api/v1/bundles/{{ item }}/render"
-        dest: "/etc/wpa_supplicant/wpa_supplicant_{{ item }}.conf"
-        headers:
-          Authorization: "Bearer {{ credmgr_token }}"
+    - name: Fingerprint the installed config for each SSID profile
+      ansible.builtin.stat:
+        path: "/etc/wpa_supplicant/wpa_supplicant_{{ item }}.conf"
+        checksum_algorithm: sha256
+      loop: "{{ credmgr_bundles }}"
+      register: credmgr_installed
+
+    # no_log: the request carries the token and a 200 carries the secret.
+    # Re-run with no_log disabled locally if a pull fails and you need the error.
+    - name: Pull rendered config for each SSID profile (304 when unchanged)
+      ansible.builtin.uri:
+        url: "{{ credmgr_base }}/api/v1/bundles/{{ item.item }}/render"
+        dest: "/etc/wpa_supplicant/wpa_supplicant_{{ item.item }}.conf"
+        headers: >-
+          {{ {'Authorization': 'Bearer ' ~ credmgr_token}
+             | combine({'If-None-Match': '"' ~ item.stat.checksum[:8] ~ '"'}
+                       if item.stat.exists else {}) }}
+        status_code: [200, 304]
+        validate_certs: "{{ credmgr_validate_certs }}"
         owner: root
         group: root
         mode: "0600"
-        force: true
-      loop: "{{ credmgr_bundles }}"
+      loop: "{{ credmgr_installed.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      register: credmgr_pull
+      changed_when: credmgr_pull.status == 200
+      no_log: true

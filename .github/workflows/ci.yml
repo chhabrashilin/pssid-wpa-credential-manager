@@ -71,7 +71,7 @@ jobs:
         run: |
           missing=0
           for f in install.sh scripts/backup.sh scripts/restore.sh \
-                   scripts/pssid-credmgr-pull.sh scripts/smoke.sh; do
+                   scripts/pssid-credmgr-pull.sh scripts/smoke.sh                    scripts/test-probe-pull.sh; do
             mode="$(git ls-files -s -- "$f" | awk '{print $1}')"
             if [ "$mode" != "100755" ]; then
               echo "::error file=$f::$f is mode ${mode:-missing}, expected 100755."
@@ -147,6 +147,13 @@ jobs:
           echo "Stack never became healthy"; exit 1
       - name: Run the end-to-end smoke suite
         run: BASE=https://localhost bash scripts/smoke.sh
+      # The probe side: run the real pull script and the real Ansible example
+      # against this stack, as root, and check the file the pSSID daemon opens
+      # (name, 0600 root, 304 no-op on re-run, recovery after delete/edit).
+      - name: Install ansible-core for the probe-pull suite
+        run: pipx install ansible-core || pip install ansible-core
+      - name: Run the probe-pull suite
+        run: sudo env "PATH=$PATH" BASE=https://localhost bash scripts/test-probe-pull.sh
       # Diagnostics only: every command here is best-effort. Without the guards
       # this step fails on its own (e.g. `docker compose ps` exits 1 with "env
       # file .env not found" when the installer died before writing it), which

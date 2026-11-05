@@ -56,6 +56,10 @@ echo "$body" | grep -q 'password=hash:8846f7eaee8fb117ad06bdd830b7586c' && pass 
 if echo "$body" | grep -E 'password=' | grep -qv 'password=hash:'; then fail "clear password present"; else pass "no clear password"; fi
 grep -qi 'cache-control: no-store' "$hdr" && pass "no-store header" || fail "missing no-store"
 etag="$(grep -i '^etag:' "$hdr" | awk '{print $2}' | tr -d '\r')"
+# The pull tools compute If-None-Match from the installed file, so the ETag
+# must be sha256(body)[:8].
+bodyfp="$(curl -fsS -H "Authorization: Bearer $tok" "$API/bundles/smoke-bundle/render" | sha256sum | cut -c1-8)"
+[[ "$etag" == "\"$bodyfp\"" ]] && pass "ETag is sha256(body)[:8]" || fail "ETag $etag != sha256(body)[:8] $bodyfp"
 
 echo "== 9. Re-pull with If-None-Match -> 304 =="
 code="$(curl -fsS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $tok" -H "If-None-Match: $etag" "$API/bundles/smoke-bundle/render")"

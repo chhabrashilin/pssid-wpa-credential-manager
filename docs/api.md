@@ -60,6 +60,13 @@ Cache-Control: no-store
 If the supplied `If-None-Match` matches the current render fingerprint, returns
 `304 Not Modified` with no body - provisioning skips the unchanged config.
 
+The fingerprint is the first 8 hex characters of the SHA-256 of the response
+body, so a client can compute `If-None-Match` from the file it already has
+installed instead of storing the ETag (this is what
+`ansible/probe-pull-example.yml` and `scripts/pssid-credmgr-pull.sh` do). A
+missing or locally edited file then never matches, and the next pull restores
+it.
+
 The token must be non-revoked, unexpired, and scoped to `:name`; otherwise
 `401`/`403` (all denials audited).
 

@@ -10,6 +10,10 @@
 # wpa_supplicant service stays disabled on probes -- the daemon runs
 # pssid-80211 against the file at batch time, so no restart is needed here.
 #
+# The render's ETag is the first 8 hex chars of the SHA-256 of its body, so
+# If-None-Match is computed from the installed file itself. No state file is
+# kept: a deleted or hand-edited file simply gets pulled again.
+#
 #   CREDMGR_TOKEN=xxx ./pssid-credmgr-pull.sh \
 #     https://credmgr.example.edu eduroam
 # ---------------------------------------------------------------------------
@@ -19,20 +23,26 @@ BASE="${1:?usage: pssid-credmgr-pull.sh <base-url> <bundle>}"
 BUNDLE="${2:?usage: pssid-credmgr-pull.sh <base-url> <bundle>}"
 TOKEN="${CREDMGR_TOKEN:?set CREDMGR_TOKEN}"
 
-DEST="/etc/wpa_supplicant/wpa_supplicant_${BUNDLE}.conf"
-ETAG_FILE="/etc/wpa_supplicant/.credmgr.${BUNDLE}.etag"
+DIR="/etc/wpa_supplicant"
+DEST="$DIR/wpa_supplicant_${BUNDLE}.conf"
 URL="$BASE/api/v1/bundles/$BUNDLE/render"
 
-install -d -m 0750 -o root -g root /etc/wpa_supplicant
+fp() { sha256sum "$1" | cut -c1-8; }
+
+install -d -m 0750 -o root -g root "$DIR"
+# Older versions of this script kept the ETag in a side file; it is unused now.
+rm -f "$DIR/.credmgr.${BUNDLE}.etag"
 
 INM=()
-[[ -f "$ETAG_FILE" ]] && INM=(-H "If-None-Match: $(cat "$ETAG_FILE")")
+[[ -f "$DEST" ]] && INM=(-H "If-None-Match: \"$(fp "$DEST")\"")
 
-TMP="$(mktemp)"
+# Download next to the destination so the final mv is atomic (the daemon may
+# read the file at any moment). mktemp creates it 0600.
+TMP="$(mktemp -p "$DIR" ".credmgr.${BUNDLE}.XXXXXX")"
 HDR="$(mktemp)"
 trap 'rm -f "$TMP" "$HDR"' EXIT
 
-code="$(curl -fsS -o "$TMP" -D "$HDR" -w '%{http_code}' \
+code="$(curl -sS -o "$TMP" -D "$HDR" -w '%{http_code}' \
   -H "Authorization: Bearer $TOKEN" "${INM[@]}" "$URL" || true)"
 
 if [[ "$code" == "304" ]]; then
@@ -40,11 +50,19 @@ if [[ "$code" == "304" ]]; then
   exit 0
 fi
 if [[ "$code" != "200" ]]; then
-  echo "ERROR: pull failed with HTTP $code" >&2
+  echo "ERROR: pull failed with HTTP ${code:-000} ($URL)" >&2
   exit 1
 fi
 
-install -m 0600 -o root -g root "$TMP" "$DEST"
-grep -i '^etag:' "$HDR" | awk '{print $2}' | tr -d '\r' > "$ETAG_FILE" || true
-echo "Installed $DEST ($(grep -i '^x-render-version' "$HDR" | tr -d '\r'))"
+header() { grep -i "^$1:" "$HDR" | head -n1 | cut -d: -f2- | tr -d ' \r"'; }
+expected="$(header x-render-fingerprint)"
+if [[ "$(fp "$TMP")" != "$expected" ]]; then
+  echo "ERROR: downloaded render does not match its fingerprint ($expected); not installing." >&2
+  exit 1
+fi
+
+chown root:root "$TMP"
+chmod 0600 "$TMP"
+mv -f "$TMP" "$DEST"
+echo "Installed $DEST (render v$(header x-render-version), fp $expected)"
 echo "The pSSID daemon picks this up on its next batch run; no service restart needed."
