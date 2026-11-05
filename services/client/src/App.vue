@@ -39,7 +39,7 @@ const roleLabel = computed(() => {
       </div>
 
       <div v-if="store.isReadOnly" class="banner banner-warn">
-        Read-only access — you can browse everything but cannot make changes, and
+        Read-only access - you can browse everything but cannot make changes, and
         secret values and token values are never shown.
       </div>
 

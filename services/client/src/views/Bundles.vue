@@ -108,8 +108,8 @@ function copy(text: string) { navigator.clipboard.writeText(text); store.toast("
       <tbody>
         <tr v-for="b in bundles" :key="b.name">
           <td><strong>{{ b.name }}</strong></td>
-          <td>{{ b.network_names.join(", ") || "—" }}</td>
-          <td>{{ b.base_template_name || "—" }}</td>
+          <td>{{ b.network_names.join(", ") || "-" }}</td>
+          <td>{{ b.base_template_name || "-" }}</td>
           <td>v{{ b.render_version }}</td>
           <td class="row" style="justify-content:flex-end; gap:6px">
             <button class="btn-sm" @click="select(b)">Open</button>
@@ -135,7 +135,7 @@ function copy(text: string) { navigator.clipboard.writeText(text); store.toast("
     <div class="row"><input :value="pullUrl" readonly /><button class="btn-sm" @click="copy(pullUrl)">Copy</button></div>
     <label>curl</label>
     <pre class="conf">{{ curlSnippet }}</pre>
-    <label>Ansible task (installs 0600 root — placeholder token, never a real one)</label>
+    <label>Ansible task (installs 0600 root - placeholder token, never a real one)</label>
     <pre class="conf">{{ ansibleSnippet }}</pre>
     <button class="btn-sm" @click="copy(ansibleSnippet)">Copy Ansible task</button>
 
@@ -165,7 +165,7 @@ function copy(text: string) { navigator.clipboard.writeText(text); store.toast("
           <input type="checkbox" style="width:auto" :value="n.name" v-model="form.network_names" /> {{ n.name }}
         </label>
       </div>
-      <label>Base (global) template name — optional</label>
+      <label>Base (global) template name - optional</label>
       <input v-model="form.base_template_name" placeholder="e.g. global-header" />
       <div class="row" style="justify-content:flex-end; margin-top:16px; gap:8px">
         <button @click="showForm = false">Cancel</button>

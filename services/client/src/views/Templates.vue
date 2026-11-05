@@ -13,7 +13,7 @@ const CONTRACT_VARS = [
   "ssid", "name", "security", "priority", "scan_ssid",
   "psk_hex", "identity", "password_nthash", "ca_cert", "client_cert", "private_key",
 ];
-// Build the literal "{{ var }}" text in script — writing it inline in the
+// Build the literal "{{ var }}" text in script - writing it inline in the
 // template would confuse Vue's mustache parser.
 const varTag = (v: string) => `{{ ${v} }}`;
 
@@ -82,7 +82,7 @@ async function activate() {
       <tbody>
         <tr v-for="t in rows" :key="t.name">
           <td><strong>{{ t.name }}</strong></td>
-          <td><span v-if="t.active_version" class="badge badge-active">v{{ t.active_version }}</span><span v-else class="muted">—</span></td>
+          <td><span v-if="t.active_version" class="badge badge-active">v{{ t.active_version }}</span><span v-else class="muted">-</span></td>
           <td>v{{ t.latest_version }}</td>
           <td>{{ t.versions }}</td>
           <td style="text-align:right"><button class="btn-sm" @click="edit(t.name)">Open</button></td>
@@ -125,7 +125,7 @@ async function activate() {
         <label>Contract variables</label>
         <div class="card" style="padding: 10px">
           <div v-for="v in CONTRACT_VARS" :key="v" class="mono" style="font-size: 12px">{{ varTag(v) }}</div>
-          <p class="hint">Secrets appear only in derived form (<span class="mono">psk_hex</span>, <span class="mono">password_nthash</span>) — never raw.</p>
+          <p class="hint">Secrets appear only in derived form (<span class="mono">psk_hex</span>, <span class="mono">password_nthash</span>) - never raw.</p>
         </div>
       </div>
     </div>

@@ -50,7 +50,7 @@ tok="$(echo "$tokresp" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')"
 tokid="$(echo "$tokresp" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')"
 [[ -n "$tok" ]] && pass "token issued" || fail "token"
 
-echo "== 8. Pull render (200) — hash form, no clear text =="
+echo "== 8. Pull render (200) - hash form, no clear text =="
 hdr="$(mktemp)"; body="$(curl -fsS -D "$hdr" -H "Authorization: Bearer $tok" "$API/bundles/smoke-bundle/render")"
 echo "$body" | grep -q 'password=hash:8846f7eaee8fb117ad06bdd830b7586c' && pass "NT hash form present" || fail "hash form missing"
 if echo "$body" | grep -E 'password=' | grep -qv 'password=hash:'; then fail "clear password present"; else pass "no clear password"; fi

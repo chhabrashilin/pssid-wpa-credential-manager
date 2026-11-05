@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# pssid-credmgr-pull — non-Ansible probe helper (PRD 9.5).
+# pssid-credmgr-pull - non-Ansible probe helper (PRD 9.5).
 # Pulls a bundle render and installs it root:root 0600, honoring the ETag/304
 # flow so an unchanged render is a no-op.
 #
@@ -36,7 +36,7 @@ code="$(curl -fsS -o "$TMP" -D "$HDR" -w '%{http_code}' \
   -H "Authorization: Bearer $TOKEN" "${INM[@]}" "$URL" || true)"
 
 if [[ "$code" == "304" ]]; then
-  echo "Render unchanged (304) — nothing to do."
+  echo "Render unchanged (304) - nothing to do."
   exit 0
 fi
 if [[ "$code" != "200" ]]; then

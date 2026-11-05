@@ -17,7 +17,7 @@ Content coming soon.
 ```
 ```
 
-Including `config-wpa-supplicant.md` — the page an operator looks for first when
+Including `config-wpa-supplicant.md` - the page an operator looks for first when
 a probe stops testing, and the subject of the credential manager this repository
 holds.
 
@@ -41,8 +41,8 @@ build step or front-matter is needed.
 
 The other 18 stubs cover Grafana, Elastic installation, PXE boot, WiFi-6
 hardware, Docker troubleshooting and the GUI's Ansible deployment. Writing those
-would mean inventing specifics — exact package versions, dashboard layouts,
-hardware revisions — that cannot be checked against anything in this workspace.
+would mean inventing specifics - exact package versions, dashboard layouts,
+hardware revisions - that cannot be checked against anything in this workspace.
 
 A confidently-worded page that is subtly wrong is worse than a stub, because a
 stub tells the reader to go and ask someone. These four are written only where
@@ -62,7 +62,7 @@ have no way to know them:
 - **`parallel` and `continue-if` must be JSON strings**, and only the exact
   capitalisation `"True"` / `"False"` converts. `"true"` reaches pScheduler as a
   string.
-- **`hosts_regex` uses `re.match`** — a prefix match, not a full match.
+- **`hosts_regex` uses `re.match`** - a prefix match, not a full match.
 - **Variable substitution replaces the whole value rather than interpolating**,
   so `"$interface-monitor"` resolves to `"wlan0"`, silently losing the suffix.
 - **Host metadata beats group metadata** (first-write-wins, host applied first).

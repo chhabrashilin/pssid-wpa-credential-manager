@@ -8,7 +8,7 @@ import { record } from "../services/audit.js";
 import { asyncHandler, badRequest, notFound } from "../util/errors.js";
 import { parse, tokenCreateSchema } from "../util/validate.js";
 
-/** Metadata view of a token — never includes hash or value. */
+/** Metadata view of a token - never includes hash or value. */
 function tokenView(t: TokenDoc) {
   return {
     id: t.id,

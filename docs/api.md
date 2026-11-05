@@ -58,13 +58,13 @@ Cache-Control: no-store
 ```
 
 If the supplied `If-None-Match` matches the current render fingerprint, returns
-`304 Not Modified` with no body — provisioning skips the unchanged config.
+`304 Not Modified` with no body - provisioning skips the unchanged config.
 
 The token must be non-revoked, unexpired, and scoped to `:name`; otherwise
 `401`/`403` (all denials audited).
 
 For pSSID probes, install the body as
-`/etc/wpa_supplicant/wpa_supplicant_<bundle>.conf` (`0600 root`) — the daemon
+`/etc/wpa_supplicant/wpa_supplicant_<bundle>.conf` (`0600 root`) - the daemon
 opens one file per SSID profile under exactly that name; see
 [`integration.md`](integration.md).
 

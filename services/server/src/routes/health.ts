@@ -4,7 +4,7 @@ import { pingDb } from "../db.js";
 import { asyncHandler } from "../util/errors.js";
 
 /**
- * GET /api/health — open endpoint. 200 only when the DB is reachable AND the
+ * GET /api/health - open endpoint. 200 only when the DB is reachable AND the
  * KEK is loaded (PRD 9.8). Never leaks detail beyond up/down booleans.
  */
 export function healthRouter(ctx: AppContext): Router {

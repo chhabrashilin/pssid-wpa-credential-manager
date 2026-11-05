@@ -16,7 +16,7 @@ Answers one question that nothing else in the pSSID system can answer:
 ## The blind spot
 
 A pSSID probe can be powered on, reachable by SSH, running its daemon, holding a
-valid config — and testing **nothing at all**, indefinitely, with no signal
+valid config - and testing **nothing at all**, indefinitely, with no signal
 anywhere.
 
 The mechanism is four lines of `pssid-daemon.py` (483-486):
@@ -37,7 +37,7 @@ Nothing catches it:
 | Component | What it knows | What it cannot know |
 |---|---|---|
 | pssid-gui2 | that a batch references a defined SSID profile | whether the probe holds that profile's credentials |
-| `provision-probes.sh` | that `pssid_config.json` was **delivered** | whether the daemon adopted it — [its own header says so](../../../pssid-gui2/scripts/provision-probes.sh) |
+| `provision-probes.sh` | that `pssid_config.json` was **delivered** | whether the daemon adopted it - [its own header says so](../../../pssid-gui2/scripts/provision-probes.sh) |
 | credential manager | that a render was pulled | whether the probe can use it |
 | the daemon | everything | it only writes to syslog, which nothing aggregates |
 
@@ -50,17 +50,17 @@ So this exists. It runs **on** the probe, where the answer actually lives.
 | Check | CRITICAL when | Why it matters |
 |---|---|---|
 | `config.present` | missing or malformed | the daemon exits 1 (lines 33-36) |
-| `config.age` | — (warns when stale) | provisioning may have silently stopped reaching this probe |
+| `config.age` | - (warns when stale) | provisioning may have silently stopped reaching this probe |
 | `host.known` | hostname not in the config | the daemon exits 1 (lines 299-302) |
 | **`wpa.configs`** | **any declared profile has no conf file** | **the silent skip** |
 | `daemon.running` | no `pssid-daemon` process | invisible at the network level |
 | `interfaces` | a declared test interface is absent | batches cannot run |
-| `credmgr.sync` | — (advisory) | which profiles are credential-manager managed |
+| `credmgr.sync` | - (advisory) | which profiles are credential-manager managed |
 
 `wpa.configs` is the point of the project. It resolves which SSID profiles this
-probe *should* hold by replaying the daemon's own host matching — the host's
+probe *should* hold by replaying the daemon's own host matching - the host's
 batches, plus every host group matched by name or by `hosts_regex`, using
-`re.match` exactly as the daemon does — and then checks that each has a
+`re.match` exactly as the daemon does - and then checks that each has a
 non-empty conf file.
 
 ### Sample: the failure nothing else sees
@@ -87,7 +87,7 @@ Every other line is green. The probe looks healthy by any other measure.
 ## Three design rules
 
 **1. Never claim more than was observed.** `provision-probes.sh` gets this right
-— it reports that a file was *delivered*, never that a probe adopted it, because
+- it reports that a file was *delivered*, never that a probe adopted it, because
 delivery is all it can see. Every check here carries the evidence behind its
 verdict.
 
@@ -98,7 +98,7 @@ means *enumeration failed*, not *the daemon is absent*, and conflating them woul
 report a broken probe as fine.
 
 **3. No secrets, ever.** A `wpa_supplicant` conf holds a network-equivalent
-credential — a 64-hex PSK or an NT hash. The report describes these files
+credential - a 64-hex PSK or an NT hash. The report describes these files
 (existence, size, mode) and never quotes a byte. Six tests enforce this,
 including on the failure path, which formats more strings and so gets its own
 check.
@@ -110,8 +110,8 @@ check.
 | Code | Meaning |
 |---|---|
 | 0 | healthy (or only `UNKNOWN` results) |
-| 1 | warnings — still testing |
-| 2 | critical — **not testing** |
+| 1 | warnings - still testing |
+| 2 | critical - **not testing** |
 
 Nagios/Icinga-compatible, and directly usable from cron or a systemd timer.
 
@@ -129,7 +129,7 @@ with a 2-minute random spread so a fleet does not stampede a collector.
 
 The unit sets `SuccessExitStatus=0 1 2` deliberately: a probe reporting "not
 testing" is a **successful run** with an unhealthy verdict. The verdict travels
-in the report, not in the unit state — otherwise `systemctl --failed` fills with
+in the report, not in the unit state - otherwise `systemctl --failed` fills with
 units that did exactly their job.
 
 To ship reports somewhere, set in `/etc/pssid/health.env`:
@@ -150,8 +150,8 @@ whether a server was up.
 
 | Suite | Tests | Approach |
 |---|---|---|
-| `tests/test_checks.py` | 44 | in-memory `FakeEnvironment` — logic |
-| `tests/test_integration.py` | 19 | real fixture filesystems via `--root` — the tool |
+| `tests/test_checks.py` | 44 | in-memory `FakeEnvironment` - logic |
+| `tests/test_integration.py` | 19 | real fixture filesystems via `--root` - the tool |
 
 Both layers earn their place. A fake that agreed with a buggy `exists()` would
 let unit tests pass; the integration suite builds real directories, real
@@ -174,7 +174,7 @@ content, and the exit codes.
 
 ## Requirements
 
-`python3` 3.9+. Nothing else, deliberately — probes are Ansible-provisioned and
+`python3` 3.9+. Nothing else, deliberately - probes are Ansible-provisioned and
 should not need a `pip install` to report their own health. HTTP posting uses
 `urllib` from the standard library.
 
@@ -192,6 +192,6 @@ A sensible order:
    probes and see what the fleet actually looks like.
 2. Enable the timer. `journalctl -u pssid-probe-health` becomes the per-probe
    record.
-3. Add `--post` once something exists to receive it — the natural home is a
+3. Add `--post` once something exists to receive it - the natural home is a
    `POST /api/v1/probe-health` endpoint on the credential manager, which already
    has the fleet view this data belongs in (see `PLAN.local.md`, W3).

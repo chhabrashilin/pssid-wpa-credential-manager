@@ -60,7 +60,7 @@ async function save() {
     <div class="card">
       <h2 style="margin-top:0">About</h2>
       <p>pSSID Credential Manager <span class="mono">v{{ s.version }}</span> · KEK version {{ s.kek_version }}</p>
-      <p class="hint">Derived credential forms (psk hex, NT hash) are still network-equivalent secrets — the rendered file is never "safe to share". Rotation is the real mitigation.</p>
+      <p class="hint">Derived credential forms (psk hex, NT hash) are still network-equivalent secrets - the rendered file is never "safe to share". Rotation is the real mitigation.</p>
     </div>
   </template>
 </template>

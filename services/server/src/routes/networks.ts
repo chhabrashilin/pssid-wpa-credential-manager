@@ -147,7 +147,7 @@ export function networksRouter(ctx: AppContext): Router {
         n.name,
         { version: doc.version, fingerprint: doc.fingerprint },
       );
-      // Response carries metadata ONLY — never the value (PRD R2).
+      // Response carries metadata ONLY - never the value (PRD R2).
       res.status(201).json({
         network_name: n.name,
         version: doc.version,

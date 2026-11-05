@@ -6,7 +6,7 @@ import { md4 } from "./md4.js";
  *
  * These functions turn a human secret into the form wpa_supplicant accepts
  * directly, so the rendered .conf never contains the human passphrase/password.
- * The derived forms are still network-equivalent secrets (PRD R4) — they are
+ * The derived forms are still network-equivalent secrets (PRD R4) - they are
  * not "safe to share".
  */
 

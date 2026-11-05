@@ -13,7 +13,7 @@ The daemon produces two distinct things, and confusing them wastes time.
 
 Operational messages tell you whether the probe is *working*. Measurement
 records are the *output*. A probe can be perfectly healthy operationally and
-produce no measurements — that is the most common failure, and only the
+produce no measurements - that is the most common failure, and only the
 operational stream shows why.
 
 The daemon also prints to stdout/stderr. Under systemd that lands in the
@@ -63,7 +63,7 @@ run that stops partway through is the useful signal.
 
 ### `No host with name '<hostname>' found.`
 
-**Fatal — the daemon exits 1.** The probe's hostname does not match any `hosts`
+**Fatal - the daemon exits 1.** The probe's hostname does not match any `hosts`
 entry in the config.
 
 ```bash
@@ -126,7 +126,7 @@ address.
 
 ### `No batch found.`
 
-No batch resolved for this probe. Note the daemon **does not exit** here — it
+No batch resolved for this probe. Note the daemon **does not exit** here - it
 continues and schedules nothing, so the process stays up doing no work. Treat
 this line as equivalent to a failure even though the daemon does not.
 

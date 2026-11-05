@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# self-test — prove the checker detects what it claims to, and stays quiet
+# self-test - prove the checker detects what it claims to, and stays quiet
 # about what it should not.
 #
 # A linter is only worth running if its false-positive rate is known. This

@@ -50,7 +50,7 @@ host      which batches this probe runs
 | `data` | Key/value metadata, used for variable substitution. |
 
 **`name` must match the probe's hostname exactly.** If no host entry matches,
-the daemon logs `No host with name '…' found.` and **exits 1** — the probe does
+the daemon logs `No host with name '…' found.` and **exits 1** - the probe does
 not start.
 
 ## `host_groups`
@@ -79,7 +79,7 @@ A probe's batches are the union of its own and every group it belongs to.
 ### Metadata precedence
 
 Host metadata **wins** over group metadata. Keys are resolved first-write-wins,
-and the host's `data` is applied before any group's — so a key defined in both
+and the host's `data` is applied before any group's - so a key defined in both
 resolves to the host's value.
 
 ## `schedules`
@@ -95,7 +95,7 @@ for each and runs the batch at the **earliest**. It reschedules after every run,
 so a batch is queued at most once at a time.
 
 A batch with no resolvable schedule is never queued. It logs a warning and sits
-idle — valid, loaded, and never running.
+idle - valid, loaded, and never running.
 
 ## `ssid_profiles`
 
@@ -140,8 +140,8 @@ are not required to be, and only `name` determines the filename.
 >
 > The daemon compares `parallel` against the exact strings `"True"` and
 > `"False"`, and calls `.lower()` on `continue-if`. A real JSON boolean
-> (`true`) fails the first silently — the value reaches pScheduler as an
-> unconverted string — and crashes the second with an `AttributeError`.
+> (`true`) fails the first silently - the value reaches pScheduler as an
+> unconverted string - and crashes the second with an `AttributeError`.
 >
 > Note the capitalisation: only `"True"`/`"False"` convert. `"true"` stays a
 > string. The GUI emits the correct form; this matters when hand-editing.
@@ -177,12 +177,12 @@ from the host's `data.interface`.
 Four rules are worth knowing, because they are surprising:
 
 1. **Keys containing `name` are skipped entirely.** `batch_name`, `hostname` and
-   anything else with `name` in the key is never substituted — and never
+   anything else with `name` in the key is never substituted - and never
    reported as unresolved either.
 2. **Matching is on the *value*, as a substring.** A metadata key matches if it
    appears anywhere inside the value string. A short key like `face` will match
    `$interface`, so choose metadata names that will not collide.
-3. **Substitution replaces the whole value — it does not interpolate.**
+3. **Substitution replaces the whole value - it does not interpolate.**
    `"$interface-monitor"` becomes `"wlan0"`, not `"wlan0-monitor"`. Composite
    values silently lose everything but the substituted part.
 4. **Unresolved variables invalidate the batch.** If a `$` survives, the daemon
@@ -215,7 +215,7 @@ Frequent mistakes it catches:
 - A `$variable` with no matching metadata.
 
 It cannot tell you whether the credentials work, whether the interface exists,
-or whether the conf files are present — those are probe-side facts. See
+or whether the conf files are present - those are probe-side facts. See
 [wpa_supplicant](config-wpa-supplicant.md).
 
 ## Delivery

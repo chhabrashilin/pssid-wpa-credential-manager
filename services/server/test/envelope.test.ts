@@ -49,7 +49,7 @@ describe("KEK rotation (re-wrap without re-encrypting payload)", () => {
 
     const rewrapped = { ...sealed, dek_wrapped: rewrapDek(oldKek, newKek, sealed.dek_wrapped) };
 
-    // Payload ciphertext is unchanged — only the wrapped key changed.
+    // Payload ciphertext is unchanged - only the wrapped key changed.
     expect(rewrapped.payload_ct).toBe(sealed.payload_ct);
     expect(rewrapped.dek_wrapped).not.toBe(sealed.dek_wrapped);
 

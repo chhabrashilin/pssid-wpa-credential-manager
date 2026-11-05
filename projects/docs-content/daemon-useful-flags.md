@@ -34,7 +34,7 @@ pssid-daemon.py --config ./pssid_config.json --hostname probe-7 --validate
 ```
 
 It is also the workaround when a probe's hostname does not match the GUI entry
-— though correcting one or the other is the real fix.
+- though correcting one or the other is the real fix.
 
 ## `--facility FACILITY`
 
@@ -59,10 +59,10 @@ anything**.
 sudo pssid-daemon.py --validate
 ```
 
-This is the dry run. It performs the full path — loads the JSON, matches this
+This is the dry run. It performs the full path - loads the JSON, matches this
 host, collects batches from the host and its groups, resolves metadata,
 substitutes variables, looks up every job and test, and renders each batch for
-the batch processor — then exits 0 with `The config file is validated.`
+the batch processor - then exits 0 with `The config file is validated.`
 
 It catches:
 
@@ -122,7 +122,7 @@ working directory**. Run it from anywhere else and it raises
 FileNotFoundError: batch_processor_format_template.j2
 ```
 
-at the first batch — after startup has already appeared to succeed. Always `cd`
+at the first batch - after startup has already appeared to succeed. Always `cd`
 to the daemon's install directory first:
 
 ```bash

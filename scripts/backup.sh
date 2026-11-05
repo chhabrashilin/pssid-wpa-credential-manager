@@ -3,7 +3,7 @@
 # Database backup (PRD 9.8).
 #
 # IMPORTANT: this dumps the MongoDB database only. Encrypted payloads stay
-# encrypted in the dump — they are USELESS without the KEK. You MUST back up
+# encrypted in the dump - they are USELESS without the KEK. You MUST back up
 # secrets/master.key SEPARATELY (different medium, different access control).
 # A dump + KEK together reconstitute every secret; keep them apart.
 # ---------------------------------------------------------------------------
@@ -45,7 +45,7 @@ if [[ -z "$COLLECTIONS" ]]; then
   exit 1
 fi
 if [[ "$COLLECTIONS" -eq 0 ]]; then
-  echo "ERROR: database '$DB' has no collections — refusing to write an empty backup." >&2
+  echo "ERROR: database '$DB' has no collections - refusing to write an empty backup." >&2
   echo "       Check MONGO_DB in .env against the running stack." >&2
   exit 1
 fi
@@ -79,6 +79,6 @@ trap - EXIT
 
 echo "Done: $ARCHIVE (${SIZE} bytes, $COLLECTIONS collections)"
 echo
-echo "Reminder: secrets/master.key is NOT in this dump. Back it up separately —"
+echo "Reminder: secrets/master.key is NOT in this dump. Back it up separately -"
 echo "without it this archive is unreadable, and with it the archive is plaintext."
 echo "Restore with: scripts/restore.sh $ARCHIVE"

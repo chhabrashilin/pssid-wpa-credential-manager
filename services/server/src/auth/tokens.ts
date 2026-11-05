@@ -7,7 +7,7 @@ import { forbidden, unauthorized } from "../util/errors.js";
 /**
  * Machine-token authentication for the render pull endpoint (PRD 9.5).
  * Tokens are read-only, scoped to specific bundles, expiring and revocable.
- * The token value is never stored — only its SHA-256.
+ * The token value is never stored - only its SHA-256.
  */
 export function requireToken(c: Collections) {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# pSSID Credential Manager — one-command installer.
+# pSSID Credential Manager - one-command installer.
 # Takes a fresh box to a working HTTPS deployment (PRD 9.8 / G7).
 #
 #   ./install.sh                 interactive

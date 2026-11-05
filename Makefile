@@ -1,4 +1,4 @@
-# pSSID Credential Manager — developer & operator entry points
+# pSSID Credential Manager - developer & operator entry points
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
 

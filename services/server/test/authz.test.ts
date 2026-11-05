@@ -16,7 +16,7 @@ const roleMap: RoleMap = { groups: { "credmgr-admin": "write", "credmgr-view": "
 
 // --- Role resolution ---------------------------------------------------------
 
-describe("defaultUserResolver — lab mode (SSO off)", () => {
+describe("defaultUserResolver - lab mode (SSO off)", () => {
   it("read-only by default", () => {
     const p = defaultUserResolver(cfg(), roleMap)({} as Request);
     expect(p.role).toBe("read");
@@ -27,7 +27,7 @@ describe("defaultUserResolver — lab mode (SSO off)", () => {
   });
 });
 
-describe("defaultUserResolver — SSO mode", () => {
+describe("defaultUserResolver - SSO mode", () => {
   const resolver = defaultUserResolver(cfg({ ssoEnabled: true }), roleMap);
   const reqWith = (oidc: unknown) => ({ oidc }) as unknown as Request;
 
@@ -53,7 +53,7 @@ describe("defaultUserResolver — SSO mode", () => {
   });
 });
 
-describe("roleForGroups — highest role wins", () => {
+describe("roleForGroups - highest role wins", () => {
   it("write beats read", () => {
     expect(roleForGroups(roleMap, ["credmgr-view", "credmgr-admin"])).toBe("write");
   });

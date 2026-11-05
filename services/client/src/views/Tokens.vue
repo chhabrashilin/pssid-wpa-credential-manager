@@ -50,7 +50,7 @@ function copy(v: string) { navigator.clipboard.writeText(v); store.toast("ok", "
   </div>
 
   <div v-if="createdValue" class="card">
-    <strong>Token created — copy it now. It will never be shown again.</strong>
+    <strong>Token created - copy it now. It will never be shown again.</strong>
     <div class="token-value" style="margin-top:8px">{{ createdValue }}</div>
     <div class="row" style="margin-top:8px; gap:8px">
       <button class="btn-sm" @click="copy(createdValue!)">Copy</button>

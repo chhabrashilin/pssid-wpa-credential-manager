@@ -11,7 +11,7 @@ path:
 /etc/wpa_supplicant/wpa_supplicant_<ssid_profile>.conf
 ```
 
-`<ssid_profile>` is the **name** of the SSID profile as defined in the GUI — not
+`<ssid_profile>` is the **name** of the SSID profile as defined in the GUI - not
 the SSID itself. A profile named `eduroam-5g` whose SSID is `eduroam` needs
 `/etc/wpa_supplicant/wpa_supplicant_eduroam-5g.conf`.
 
@@ -26,7 +26,7 @@ and again with `-d` to tear the association down afterwards.
 
 > **The `wpa_supplicant` *service* is disabled on probes and must stay that way.**
 > The daemon drives `pssid-80211` directly, per batch, inside a network
-> namespace. Nothing should `systemctl restart wpa_supplicant` — after
+> namespace. Nothing should `systemctl restart wpa_supplicant` - after
 > installing a new config there is nothing to restart, and the next batch picks
 > the file up on its own.
 
@@ -98,7 +98,7 @@ Generate the hex form rather than storing the passphrase:
 wpa_passphrase "ExampleNet" "the-passphrase"
 ```
 
-This is `PBKDF2-SHA1(passphrase, ssid, 4096, 32)`. It is **SSID-specific** — the
+This is `PBKDF2-SHA1(passphrase, ssid, 4096, 32)`. It is **SSID-specific** - the
 same passphrase on a different SSID produces a different `psk`, so a config
 cannot be copied between networks.
 
@@ -118,7 +118,7 @@ network={
 }
 ```
 
-`hash:` takes the **NT hash** — `MD4(UTF-16LE(password))` — so the clear-text
+`hash:` takes the **NT hash** - `MD4(UTF-16LE(password))` - so the clear-text
 password never appears in the file.
 
 > OpenSSL 3 removed MD4 from its default provider, so `openssl dgst -md4` may
@@ -164,7 +164,7 @@ country=US
 
 ## Getting the files onto probes
 
-### Option A — pSSID Credential Manager (recommended)
+### Option A - pSSID Credential Manager (recommended)
 
 Secrets are stored encrypted, rendered into derived forms, and pulled by the
 probe over HTTPS with a scoped, expiring token. Nothing clear-text is ever
@@ -177,7 +177,7 @@ CREDMGR_TOKEN=… pssid-credmgr-pull.sh https://credmgr.example.edu eduroam
 Installs `/etc/wpa_supplicant/wpa_supplicant_eduroam.conf` as `0600 root`, and
 uses `If-None-Match` so an unchanged render is a no-op.
 
-The naming convention ties the layers together — one name at every level:
+The naming convention ties the layers together - one name at every level:
 
 ```
 GUI SSID profile name  ==  credential-manager network  ==  credential-manager bundle
@@ -185,7 +185,7 @@ GUI SSID profile name  ==  credential-manager network  ==  credential-manager bu
 
 with one network per bundle, because the daemon wants one file per profile.
 
-### Option B — Ansible with a vaulted variables file
+### Option B - Ansible with a vaulted variables file
 
 The older workflow: write `wpa_supplicant_profiles.yml` containing clear-text
 credentials, encrypt it with `ansible-vault`, and render it onto probes.
@@ -194,13 +194,13 @@ If you use this, note two things:
 
 1. The vault password file is the whole security boundary. Some published
    instructions suggest `chmod 644 .vault_pass.txt` and `chmod 755 -R` over the
-   playbook tree — that makes the vault password readable by every local user,
+   playbook tree - that makes the vault password readable by every local user,
    next to the vault it opens, which removes the protection entirely. Keep it
    `0600`, owned by the user running Ansible.
 2. The clear-text file exists on the controller before encryption, and in shell
    history. Shred it (`shred -u`) once the vault file is written.
 
-### Option C — by hand
+### Option C - by hand
 
 Acceptable for a single lab probe:
 
@@ -224,7 +224,7 @@ Two notes: `wpa_supplicant` never exits on its own, hence `timeout`; and use
 `pkill -x` (exact name) rather than `pkill -f`, which would match your own
 command line and kill the terminal.
 
-Successful parsing does **not** mean the credentials are correct — only that the
+Successful parsing does **not** mean the credentials are correct - only that the
 syntax is valid.
 
 ## Troubleshooting
@@ -244,7 +244,7 @@ probe and that the `identity` realm matches what the RADIUS server expects.
 
 **It worked, then stopped after a credential rotation.**
 The probe still holds the old render. Re-pull it. With the credential manager,
-check that a new render was produced after the rotation — storing a new secret
+check that a new render was produced after the rotation - storing a new secret
 does not by itself update the rendered file.
 
 **A file exists but is zero bytes.**

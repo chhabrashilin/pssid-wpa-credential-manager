@@ -7,7 +7,7 @@ dist/
 services/*/dist/
 services/client/dist/
 
-# Environment & secrets — NEVER commit these
+# Environment & secrets - NEVER commit these
 .env
 *.local
 master.key
@@ -31,7 +31,7 @@ coverage/
 data/
 mongo-data/
 
-# Local working notes (plans, scratch analysis) — never committed
+# Local working notes (plans, scratch analysis) - never committed
 *.local.md
 
 # Python bytecode (projects/)

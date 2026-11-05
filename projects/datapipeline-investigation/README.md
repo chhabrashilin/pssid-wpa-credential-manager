@@ -1,4 +1,4 @@
-# Data pipeline — investigation
+# Data pipeline - investigation
 
 **This project is deliberately not code.**
 
@@ -14,8 +14,8 @@ way, and a specification for whoever has access to the missing pieces.
 
 ## The gap
 
-Measurements are the **product** of the entire pSSID system. Everything else —
-the GUI, the credential manager, the daemon, the probes — exists to produce
+Measurements are the **product** of the entire pSSID system. Everything else -
+the GUI, the credential manager, the daemon, the probes - exists to produce
 them. And the component that receives them is the least defined thing here:
 
 | Repository | State |
@@ -32,7 +32,7 @@ here can read, and the role that would automate it is a placeholder.
 
 Two archiving routes exist, and they are not documented together anywhere.
 
-### Route A — syslog (the shipped default)
+### Route A - syslog (the shipped default)
 
 `pssid-daemon/pssid_config.json`:
 
@@ -53,7 +53,7 @@ intended shape is:
 test → pscheduler batch processor → syslog(local0) → filebeat → Elastic
 ```
 
-### Route B — AMQP direct to Elastic (the iLab deployment)
+### Route B - AMQP direct to Elastic (the iLab deployment)
 
 `ansible-inventory-pssid-ilab/playbooks/files/pssid_conf.json` and
 `files/rpi_meta.py` both carry:
@@ -83,7 +83,7 @@ files in `ansible-inventory-pssid-ilab`:
 
 Username and password are both `elastic`, in git history, in a repository that
 is public on GitHub. This is worth acting on independently of anything else in
-this document — rotating the credential and moving it to a vaulted variable is a
+this document - rotating the credential and moving it to a vaulted variable is a
 contained change, and the git history will still need attention afterwards.
 
 It is also the same class of problem the credential manager was built to solve
@@ -93,8 +93,8 @@ to put a secret.
 ### 2. `validate_archivers.py` validates nothing · **Medium**
 
 `ansible-inventory-pssid-ilab/playbooks/files/validate_archivers.py` is a
-well-built validator — it knows the required and optional keys for
-`bitbucket`, `failer`, `http`, `kafka`, `rabbitmq` and `syslog` archivers — and
+well-built validator - it knows the required and optional keys for
+`bitbucket`, `failer`, `http`, `kafka`, `rabbitmq` and `syslog` archivers - and
 it never runs, because of a one-word schema mismatch:
 
 ```python
@@ -121,7 +121,7 @@ would actually catch a malformed archiver before it reaches a probe.
 ### 3. The archiver schema is unvalidated end to end · **Medium**
 
 `pssid-gui2`'s `assertDaemonValid` checks hosts, host groups, batches, jobs,
-tests and schedules — but not `archivers`. And `validate_archivers.py`, which
+tests and schedules - but not `archivers`. And `validate_archivers.py`, which
 knows the archiver rules, is not reachable from the GUI and does not run (see
 above).
 
@@ -137,7 +137,7 @@ cluster.
 
 ### Questions to answer first
 
-1. **Which route is live** — syslog+filebeat, or AMQP direct? Both are
+1. **Which route is live** - syslog+filebeat, or AMQP direct? Both are
    configured somewhere; only one can be the intended path.
 2. **What is the index schema?** The batch processor writes a pScheduler result
    plus the `reference` block the daemon builds (`SSID`, `batch_name`,
@@ -167,7 +167,7 @@ README.md            which route it implements, and the variables it needs
 `pssid-daemon-tests` (a sibling project here) found and reproduced a defect that
 directly corrupts this pipeline's data:
 
-> **D2 — the `reference` SSID is always the first globally defined profile.**
+> **D2 - the `reference` SSID is always the first globally defined profile.**
 >
 > The daemon builds the pScheduler `reference` block from
 > `data["ssid_profiles"][0]` while executing `batch["ssid_profiles"]`. With more
@@ -179,7 +179,7 @@ directly corrupts this pipeline's data:
 > reference SSID actually sent: 'FIRST'
 > ```
 
-Any deployment with a single SSID profile is unaffected — which may be why it
+Any deployment with a single SSID profile is unaffected - which may be why it
 has not surfaced. But a pipeline built on the assumption that
 `reference.SSID` identifies the network measured will silently mis-attribute
 results the moment a second profile is added.
@@ -199,7 +199,7 @@ results the moment a second profile is added.
 3. **Fix daemon defect D2** so `reference.SSID` is trustworthy.
 4. **Answer the four questions**, then write the role.
 5. **Write `analytics-installation.md` and `analytics-grafana.md`** in
-   `pSSID-docs` — both are currently "Content coming soon", and this is the
+   `pSSID-docs` - both are currently "Content coming soon", and this is the
    least-documented part of the system.
 
 Steps 1-3 are worth doing whatever the answer to step 4 turns out to be.

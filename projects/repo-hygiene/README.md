@@ -28,9 +28,9 @@ Error: Process completed with exit code 126.
 
 Nothing in that message says the file **mode** is the problem.
 
-This is not hypothetical. It broke `pssid-wpa-credential-manager` CI — all four
+This is not hypothetical. It broke `pssid-wpa-credential-manager` CI - all four
 shell scripts were `100644`, so `./install.sh -y` died and took the entire
-end-to-end smoke job with it — and it sat latent in `pssid-gui2`, where
+end-to-end smoke job with it - and it sat latent in `pssid-gui2`, where
 `sudo scripts/provision-probes.sh`, the documented command for delivering config
 to every probe, was also `100644`.
 
@@ -62,7 +62,7 @@ chmod +x defaults.sh
 ```
 
 The `chmod +x` line **is the workaround**. Someone hit the bug, worked around it
-by hand, and documented the workaround instead of fixing the mode — so every
+by hand, and documented the workaround instead of fixing the mode - so every
 operator since has had to do it too. Committing the bit removes that step.
 
 ---
@@ -93,7 +93,7 @@ are **correct** at `100644`. Demanding `+x` everywhere produces noise, and noisy
 checkers get switched off.
 
 So the rule is: **a script must be executable if something in the repository
-invokes it directly.** Detection is positive-evidence-only — it looks for a real
+invokes it directly.** Detection is positive-evidence-only - it looks for a real
 `./script` or `sudo script` and reports where it saw it. The tempting inverse
 ("flag anything not preceded by an interpreter") was the first implementation and
 it produced four false positives on `pssid-gui2` alone, including on a markdown
@@ -115,7 +115,7 @@ Calibrated against the real repositories:
 ## The self-test
 
 `./self-test.sh` builds throwaway repositories with known-good and known-bad
-content and asserts the verdict on each — 15 assertions covering detection,
+content and asserts the verdict on each - 15 assertions covering detection,
 **non**-detection, exit codes, and `--fix`. A linter whose false-positive rate
 has not been measured is not worth running, and the non-detection cases are half
 the suite for that reason.
@@ -130,7 +130,7 @@ self-test green
 ## `--fix`
 
 Stages the executable bit via `git update-index --chmod=+x`. It **stages, never
-commits** — review with `git diff --cached` first.
+commits** - review with `git diff --cached` first.
 
 `git update-index` is the right tool rather than `chmod`: on a checkout with
 `core.fileMode=false`, `chmod` changes the working file and git ignores it, so

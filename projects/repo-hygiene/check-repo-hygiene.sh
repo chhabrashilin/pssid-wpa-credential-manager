@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# check-repo-hygiene — catch the file-level defects that only surface at run
+# check-repo-hygiene - catch the file-level defects that only surface at run
 # time, on someone else's machine.
 #
 #   ./check-repo-hygiene.sh [REPO ...]     # default: the current repository
