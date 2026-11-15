@@ -120,7 +120,7 @@ async function saveCred() {
   else if (credType.value === "eap-tls") body = { client_cert: cred.client_cert, private_key: cred.private_key, ca_cert: cred.ca_cert };
   try {
     const r = await api.put<{ version: number; fingerprint: string }>(`/networks/${credNet.value.name}/credential`, body);
-    store.toast("ok", `Credential saved — v${r.version}, fp ${r.fingerprint}`);
+    store.toast("ok", `Credential saved - v${r.version}, fp ${r.fingerprint}`);
     showCred.value = false;
     await load();
   } catch (e) {
@@ -156,7 +156,7 @@ async function saveCred() {
             <span v-else-if="n.security === 'open'" class="muted">none (open)</span>
             <span v-else class="badge badge-warn">not set</span>
           </td>
-          <td>{{ n.template_name }} <span class="muted">v{{ n.template_version ?? "—" }}</span></td>
+          <td>{{ n.template_name }} <span class="muted">v{{ n.template_version ?? "-" }}</span></td>
           <td class="row" style="gap: 6px; justify-content: flex-end">
             <button class="btn-sm" :disabled="store.isReadOnly || n.security === 'open'" @click="openCred(n)">
               {{ n.credential ? "Rotate" : "Set credential" }}
@@ -188,7 +188,7 @@ async function saveCred() {
       <div class="row" style="gap: 16px">
         <div style="flex:1"><label>Priority</label><input type="number" v-model="form.priority" /></div>
         <div style="flex:1"><label>Hidden (scan_ssid)</label>
-          <select v-model="form.scan_ssid"><option :value="0">0 — broadcast</option><option :value="1">1 — hidden</option></select>
+          <select v-model="form.scan_ssid"><option :value="0">0 - broadcast</option><option :value="1">1 - hidden</option></select>
         </div>
       </div>
       <label>Template</label>
@@ -210,7 +210,7 @@ async function saveCred() {
   <div v-if="showCred" class="modal-backdrop" @click.self="showCred = false">
     <div class="modal">
       <h2 style="margin-top:0">Set credential · {{ credNet?.name }}</h2>
-      <p class="hint">Secrets are write-only. After saving you will see only a fingerprint — never the value.</p>
+      <p class="hint">Secrets are write-only. After saving you will see only a fingerprint - never the value.</p>
 
       <template v-if="credType === 'wpa-psk'">
         <label>Passphrase (8–63 chars, or 64-hex raw PSK)</label>
@@ -225,7 +225,7 @@ async function saveCred() {
         <input v-model="cred.identity" placeholder="pssid-probe" />
         <label>Password</label>
         <input type="password" v-model="cred.password" />
-        <p class="hint">Stored encrypted; rendered as <span class="mono">password=hash:&lt;NT hash&gt;</span> — never clear text.</p>
+        <p class="hint">Stored encrypted; rendered as <span class="mono">password=hash:&lt;NT hash&gt;</span> - never clear text.</p>
       </template>
 
       <template v-else-if="credType === 'eap-tls'">

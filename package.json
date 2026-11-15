@@ -2,7 +2,7 @@
   "name": "pssid-credmgr",
   "version": "1.0.0",
   "private": true,
-  "description": "pSSID Credential Manager — encrypted wpa_supplicant credential & template manager",
+  "description": "pSSID Credential Manager - encrypted wpa_supplicant credential & template manager",
   "license": "MIT",
   "workspaces": [
     "services/server",

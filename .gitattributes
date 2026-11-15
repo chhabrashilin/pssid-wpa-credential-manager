@@ -13,4 +13,3 @@ Dockerfile text eol=lf
 # fails there with a confusing "no such file or directory" naming the
 # interpreter. Pin them the same way *.sh is pinned.
 *.py text eol=lf
-projects/pssid-probe-health/pssid-probe-health text eol=lf

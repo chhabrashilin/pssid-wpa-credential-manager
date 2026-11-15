@@ -50,12 +50,16 @@ tok="$(echo "$tokresp" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')"
 tokid="$(echo "$tokresp" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')"
 [[ -n "$tok" ]] && pass "token issued" || fail "token"
 
-echo "== 8. Pull render (200) — hash form, no clear text =="
+echo "== 8. Pull render (200) - hash form, no clear text =="
 hdr="$(mktemp)"; body="$(curl -fsS -D "$hdr" -H "Authorization: Bearer $tok" "$API/bundles/smoke-bundle/render")"
 echo "$body" | grep -q 'password=hash:8846f7eaee8fb117ad06bdd830b7586c' && pass "NT hash form present" || fail "hash form missing"
 if echo "$body" | grep -E 'password=' | grep -qv 'password=hash:'; then fail "clear password present"; else pass "no clear password"; fi
 grep -qi 'cache-control: no-store' "$hdr" && pass "no-store header" || fail "missing no-store"
 etag="$(grep -i '^etag:' "$hdr" | awk '{print $2}' | tr -d '\r')"
+# The pull tools compute If-None-Match from the installed file, so the ETag
+# must be sha256(body)[:8].
+bodyfp="$(curl -fsS -H "Authorization: Bearer $tok" "$API/bundles/smoke-bundle/render" | sha256sum | cut -c1-8)"
+[[ "$etag" == "\"$bodyfp\"" ]] && pass "ETag is sha256(body)[:8]" || fail "ETag $etag != sha256(body)[:8] $bodyfp"
 
 echo "== 9. Re-pull with If-None-Match -> 304 =="
 code="$(curl -fsS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $tok" -H "If-None-Match: $etag" "$API/bundles/smoke-bundle/render")"

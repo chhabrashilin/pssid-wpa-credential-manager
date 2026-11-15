@@ -3,7 +3,7 @@ import type { AuditAction, AuditEventDoc } from "../models/types.js";
 import type { Principal } from "../auth/principal.js";
 
 /**
- * Append-only audit log (PRD 9.7). Meta must NEVER contain secret values —
+ * Append-only audit log (PRD 9.7). Meta must NEVER contain secret values -
  * fingerprints only. This module is the single writer; nothing exposes an
  * update/delete path for audit rows.
  */

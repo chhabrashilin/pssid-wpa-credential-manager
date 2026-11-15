@@ -27,7 +27,7 @@ one network). Probe provisioning then:
 2. Applies the pSSID daemon config from the GUI.
 
 So when a GUI batch references SSID profile `eduroam`, the daemon finds
-`wpa_supplicant_eduroam.conf` — rendered and delivered by this app — and
+`wpa_supplicant_eduroam.conf` - rendered and delivered by this app - and
 `wpa_supplicant` can join the SSIDs the batch tests. Multi-network bundles
 remain useful outside the pSSID daemon (any consumer of a standard combined
 `wpa_supplicant.conf`), but pSSID probes use the one-network-per-bundle form.

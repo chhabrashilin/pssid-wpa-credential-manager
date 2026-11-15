@@ -26,15 +26,15 @@ exist in clear text on a host machine.
 
 ## Core concepts
 
-- **Network** — a wireless network to join (SSID + unique name), with a
+- **Network** - a wireless network to join (SSID + unique name), with a
   security type: `wpa-psk`, `wpa-eap-peap-mschapv2`, `eap-tls`, `open`.
-- **Credential** — versioned secret material for a network. Only the latest
+- **Credential** - versioned secret material for a network. Only the latest
   version renders; older versions kept encrypted for audit/rollback.
-- **Template** — a versioned Jinja template producing a `network={...}` block.
-- **Bundle** — a named, ordered set of networks rendered into one
+- **Template** - a versioned Jinja template producing a `network={...}` block.
+- **Bundle** - a named, ordered set of networks rendered into one
   `wpa_supplicant.conf` for a class of probes.
-- **Render** — the act of producing final `.conf` text with derived secrets.
-- **Machine token** — a scoped, read-only, expiring API token for pull.
+- **Render** - the act of producing final `.conf` text with derived secrets.
+- **Machine token** - a scoped, read-only, expiring API token for pull.
 
 ## The no-clear-text rules
 

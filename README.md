@@ -29,7 +29,7 @@ tests. See [`PRD`](docs/PRD.md) for the full product spec.
 | Rule | Guarantee |
 |------|-----------|
 | **R1** | Every secret is AES-256-GCM encrypted under a per-secret data key, wrapped by a master key (KEK). |
-| **R2** | Secrets are **write-only**: the API never returns a value — only a fingerprint, version, and age. There is no "reveal". |
+| **R2** | Secrets are **write-only**: the API never returns a value - only a fingerprint, version, and age. There is no "reveal". |
 | **R3** | Rendered files use derived forms wherever the protocol allows: PBKDF2 PSK hex and MSCHAPv2 NT hash. The human passphrase/password never leaves the manager. |
 | **R4** | **Honest messaging**: the derived forms are still *network-equivalent* secrets. A rendered file is never "safe to share". Rotation limits leak damage. |
 | **R5** | Renders are HTTPS + token only, `Cache-Control: no-store`, and documented for `0600 root` on-probe placement. |
@@ -54,7 +54,7 @@ exits non-zero if the stack comes up but the API does not. Tune the wait with
 
 > **Hostname variable:** use `CREDMGR_HOSTNAME`. Plain `HOSTNAME` is still
 > honoured as the *default* for backward compatibility, but bash sets
-> `$HOSTNAME` itself, so it cannot be distinguished from a value you chose —
+> `$HOSTNAME` itself, so it cannot be distinguished from a value you chose -
 > which is why it is only a suggestion and `CREDMGR_HOSTNAME` wins.
 
 Then open `https://<hostname>/`. Health: `https://<hostname>/api/health`.
@@ -91,12 +91,12 @@ KEK_FILE=secrets/master.key OPEN_WRITE=true make dev-server
 
 The pSSID daemon reads one file per SSID profile
 (`/etc/wpa_supplicant/wpa_supplicant_{profile}.conf`), so define one bundle per
-profile — bundle name = GUI SSID-profile name = network name — and the pull
+profile - bundle name = GUI SSID-profile name = network name - and the pull
 tooling installs each render under the name the daemon expects
 (see [`docs/integration.md`](docs/integration.md)):
 
 ```bash
-# Ansible (idempotent — 304 on unchanged render):
+# Ansible (idempotent - 304 on unchanged render):
 ansible-playbook -i probes.ini ansible/probe-pull-example.yml \
   -e credmgr_base=https://credmgr.example.edu \
   -e '{"credmgr_bundles": ["eduroam", "MWireless"]}' -e credmgr_token=$CREDMGR_TOKEN
@@ -112,12 +112,12 @@ scripts/backup.sh ./backups                              # dump (refuses to writ
 scripts/restore.sh ./backups/credmgr-<stamp>.archive.gz  # restore, with confirmation
 ```
 
-The dump contains only encrypted payloads — **useless without the KEK**. Back
+The dump contains only encrypted payloads - **useless without the KEK**. Back
 up `secrets/master.key` **separately** from database dumps.
 
 `backup.sh` reads `MONGO_DB` from `.env` and refuses to write an archive when
 the database has no collections, because `mongodump` exits 0 on a database that
-does not exist — an empty archive reported as success is the worst possible
+does not exist - an empty archive reported as success is the worst possible
 backup outcome. `restore.sh` refuses to run without `secrets/master.key`
 present: restoring against the wrong KEK yields a database that loads perfectly
 and decrypts nothing. Confirm a restore by checking that a credential
@@ -139,7 +139,16 @@ the Ansible/shell syntax checks, and the full end-to-end smoke against a real
 installed stack on every push and pull request.
 
 Integration with the pSSID GUI is by **convention** (a GUI SSID-profile name
-matches a credential-manager network name) — see [`docs/integration.md`](docs/integration.md).
+matches a credential-manager network name) - see [`docs/integration.md`](docs/integration.md).
+
+## Related repositories
+
+| Repository | What it is |
+|---|---|
+| [pssid-gui2](https://github.com/UMNET-perfSONAR/pssid-gui2) | Generates the `pssid_config.json` whose SSID profiles name the networks this app manages |
+| [pssid-daemon](https://github.com/UMNET-perfSONAR/pssid-daemon) | Runs on each probe and reads `/etc/wpa_supplicant/wpa_supplicant_<profile>.conf` |
+| [pssid-probe-health](https://github.com/chhabrashilin/pssid-probe-health) | On-probe check that every profile's conf was actually delivered |
+| [pssid-repo-hygiene](https://github.com/chhabrashilin/pssid-repo-hygiene) | The file-mode and line-ending checks this repository's CI runs |
 
 ## License
 

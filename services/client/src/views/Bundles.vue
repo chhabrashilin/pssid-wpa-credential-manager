@@ -79,26 +79,44 @@ async function doRender() {
   } catch (e) { store.toast("err", (e as Error).message); }
 }
 
-const ansibleSnippet = computed(() => `- name: Pull wpa_supplicant.conf for this probe class
-  ansible.builtin.get_url:
+// The pSSID daemon reads one file per SSID profile, named after the bundle, and
+// runs pssid-80211 against it at batch time (the wpa_supplicant service stays
+// disabled on probes, so nothing is restarted). Keep these in step with
+// ansible/probe-pull-example.yml and scripts/pssid-credmgr-pull.sh.
+const destPath = computed(() => selected.value ? `/etc/wpa_supplicant/wpa_supplicant_${selected.value.name}.conf` : "");
+
+const ansibleSnippet = computed(() => `- name: Fingerprint the installed ${selected.value?.name} config
+  ansible.builtin.stat:
+    path: ${destPath.value}
+    checksum_algorithm: sha256
+  register: credmgr_installed
+
+- name: Pull the ${selected.value?.name} render (304 when unchanged)
+  ansible.builtin.uri:
     url: "${pullUrl.value}"
-    dest: /etc/wpa_supplicant/wpa_supplicant.conf
-    headers:
-      Authorization: "Bearer {{ credmgr_token }}"
+    dest: ${destPath.value}
+    headers: >-
+      {{ {'Authorization': 'Bearer ' ~ credmgr_token}
+         | combine({'If-None-Match': '"' ~ credmgr_installed.stat.checksum[:8] ~ '"'}
+                   if credmgr_installed.stat.exists else {}) }}
+    status_code: [200, 304]
     owner: root
     group: root
     mode: "0600"
-  notify: restart wpa_supplicant`);
+  register: credmgr_pull
+  changed_when: credmgr_pull.status == 200
+  no_log: true`);
 
-const curlSnippet = computed(() =>
-  `curl -fsS -H "Authorization: Bearer $CREDMGR_TOKEN" \\\n  "${pullUrl.value}" -o /etc/wpa_supplicant/wpa_supplicant.conf`);
+const curlSnippet = computed(() => `sudo --preserve-env=CREDMGR_TOKEN sh -c 'umask 077 && curl -fsS \\
+  -H "Authorization: Bearer $CREDMGR_TOKEN" "${pullUrl.value}" \\
+  -o ${destPath.value}.new && mv ${destPath.value}.new ${destPath.value}'`);
 
 function copy(text: string) { navigator.clipboard.writeText(text); store.toast("ok", "Copied"); }
 </script>
 
 <template>
   <div class="spread">
-    <div><h1>Bundles</h1><p class="muted">Sets of networks rendered into one wpa_supplicant.conf.</p></div>
+    <div><h1>Bundles</h1><p class="muted">Sets of networks rendered into one wpa_supplicant file. On pSSID probes, name each bundle after its SSID profile.</p></div>
     <button class="btn-primary" :disabled="store.isReadOnly" @click="openCreate">+ New bundle</button>
   </div>
 
@@ -108,8 +126,8 @@ function copy(text: string) { navigator.clipboard.writeText(text); store.toast("
       <tbody>
         <tr v-for="b in bundles" :key="b.name">
           <td><strong>{{ b.name }}</strong></td>
-          <td>{{ b.network_names.join(", ") || "—" }}</td>
-          <td>{{ b.base_template_name || "—" }}</td>
+          <td>{{ b.network_names.join(", ") || "-" }}</td>
+          <td>{{ b.base_template_name || "-" }}</td>
           <td>v{{ b.render_version }}</td>
           <td class="row" style="justify-content:flex-end; gap:6px">
             <button class="btn-sm" @click="select(b)">Open</button>
@@ -133,11 +151,14 @@ function copy(text: string) { navigator.clipboard.writeText(text); store.toast("
     <h2>Machine pull</h2>
     <label>Pull URL</label>
     <div class="row"><input :value="pullUrl" readonly /><button class="btn-sm" @click="copy(pullUrl)">Copy</button></div>
-    <label>curl</label>
+    <label>Installs to</label>
+    <div class="mono">{{ destPath }}</div>
+    <label>One-off pull with curl (for scheduled pulls use scripts/pssid-credmgr-pull.sh, which skips unchanged renders)</label>
     <pre class="conf">{{ curlSnippet }}</pre>
-    <label>Ansible task (installs 0600 root — placeholder token, never a real one)</label>
+    <button class="btn-sm" @click="copy(curlSnippet)">Copy curl command</button>
+    <label>Ansible tasks (installs 0600 root, 304 when unchanged - placeholder token, never a real one)</label>
     <pre class="conf">{{ ansibleSnippet }}</pre>
-    <button class="btn-sm" @click="copy(ansibleSnippet)">Copy Ansible task</button>
+    <button class="btn-sm" @click="copy(ansibleSnippet)">Copy Ansible tasks</button>
 
     <h2>Render history</h2>
     <div class="table-wrap">
@@ -165,7 +186,7 @@ function copy(text: string) { navigator.clipboard.writeText(text); store.toast("
           <input type="checkbox" style="width:auto" :value="n.name" v-model="form.network_names" /> {{ n.name }}
         </label>
       </div>
-      <label>Base (global) template name — optional</label>
+      <label>Base (global) template name - optional</label>
       <input v-model="form.base_template_name" placeholder="e.g. global-header" />
       <div class="row" style="justify-content:flex-end; margin-top:16px; gap:8px">
         <button @click="showForm = false">Cancel</button>

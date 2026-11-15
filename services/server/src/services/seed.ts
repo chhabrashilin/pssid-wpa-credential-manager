@@ -27,7 +27,7 @@ export const STARTER_TEMPLATES: Record<string, string> = {
 
 /**
  * Seed the two starter templates as active v1 if they don't already exist.
- * Idempotent — safe to call on every startup.
+ * Idempotent - safe to call on every startup.
  */
 export async function seedStarterTemplates(c: Collections): Promise<void> {
   for (const [name, body] of Object.entries(STARTER_TEMPLATES)) {

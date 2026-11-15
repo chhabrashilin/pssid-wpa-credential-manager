@@ -111,7 +111,7 @@ export function bundlesRouter(ctx: AppContext): Router {
       const b = await c.bundles.findOne({ name: req.params.name! });
       if (!b) throw notFound("Bundle not found");
 
-      // Real (unredacted) render, encrypted at rest — never written to disk clear.
+      // Real (unredacted) render, encrypted at rest - never written to disk clear.
       const { text, fingerprint } = await renderBundle(ctx, b.name, /* redact */ false);
       const version = b.render_version + 1;
       const sealed = seal(kek, text);

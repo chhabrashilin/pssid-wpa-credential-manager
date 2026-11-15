@@ -30,8 +30,8 @@ function bool(v: string | undefined, dflt = false): boolean {
 
 /**
  * Load the 32-byte master key (KEK). Preference order:
- *   1. KEK_FILE  — a file readable only by the app (installer writes mode 0400)
- *   2. KEK_BASE64 — base64 of 32 raw bytes (container platforms)
+ *   1. KEK_FILE  - a file readable only by the app (installer writes mode 0400)
+ *   2. KEK_BASE64 - base64 of 32 raw bytes (container platforms)
  * Throws if neither resolves to exactly 32 bytes.
  */
 export function loadKek(env: NodeJS.ProcessEnv = process.env): Buffer {

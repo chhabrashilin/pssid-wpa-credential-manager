@@ -19,7 +19,7 @@ const peapCtx: TemplateContext = {
   ca_cert: "/etc/ssl/certs/umich.pem",
 };
 
-describe("template rendering — starter templates", () => {
+describe("template rendering - starter templates", () => {
   it("renders peap-mschapv2 with the hash: form and no clear text", () => {
     const out = renderTemplate(STARTER_TEMPLATES["peap-mschapv2"]!, peapCtx);
     expect(out).toContain('identity="pssid-probe"');
@@ -47,7 +47,7 @@ describe("template rendering — starter templates", () => {
   });
 });
 
-describe("template sandbox — fail closed", () => {
+describe("template sandbox - fail closed", () => {
   it("throws on undefined variables", () => {
     expect(() => renderTemplate("psk={{ missing_var }}", { ssid: "x", name: "x", security: "wpa-psk", priority: 0, scan_ssid: 0 })).toThrow();
   });

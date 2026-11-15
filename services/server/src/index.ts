@@ -9,7 +9,7 @@ import type { AppContext } from "./context.js";
 
 async function main(): Promise<void> {
   const cfg = loadConfig();
-  const kek = loadKek(); // throws if missing/invalid — fail fast
+  const kek = loadKek(); // throws if missing/invalid - fail fast
   const roleMap = loadRoleMap(cfg.roleMapFile);
 
   const c = await connectDb(cfg.mongoUrl, cfg.mongoDb);

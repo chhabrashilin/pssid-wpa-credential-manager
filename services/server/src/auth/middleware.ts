@@ -14,7 +14,7 @@ export type AuthResolver = (req: Request) => Principal;
 /**
  * Default user-principal resolver.
  *  - SSO on:  read `req.oidc` (express-openid-connect); map group claims.
- *  - SSO off: lab mode — write role if OPEN_WRITE, else read-only.
+ *  - SSO off: lab mode - write role if OPEN_WRITE, else read-only.
  */
 export function defaultUserResolver(cfg: AppConfig, roleMap: RoleMap): AuthResolver {
   return (req: Request): Principal => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveNtHash, derivePskHex, isRawPskHex } from "../src/crypto/derive.js";
 
-// IEEE 802.11i / RFC-standard WPA-PSK PBKDF2 test vectors — these are exactly
+// IEEE 802.11i / RFC-standard WPA-PSK PBKDF2 test vectors - these are exactly
 // what `wpa_passphrase <ssid> <passphrase>` emits.
 describe("derivePskHex (wpa_passphrase vectors)", () => {
   it.each([

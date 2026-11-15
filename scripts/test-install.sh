@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# Installer regression suite — exercises install.sh WITHOUT Docker.
+# Installer regression suite - exercises install.sh WITHOUT Docker.
 #
 # install.sh is the one script every operator runs and the one script the
 # end-to-end CI job depends on, but it was only ever tested by running it for

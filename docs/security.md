@@ -28,7 +28,7 @@ fingerprint, never read it back.
 
 | Security type | Rendered form | Derivation |
 |---------------|---------------|------------|
-| WPA-PSK | `psk=<64 hex>` | `PBKDF2-SHA1(passphrase, ssid, 4096, 32)` — identical to `wpa_passphrase` |
+| WPA-PSK | `psk=<64 hex>` | `PBKDF2-SHA1(passphrase, ssid, 4096, 32)` - identical to `wpa_passphrase` |
 | PEAP/MSCHAPv2 | `password=hash:<32 hex>` | `MD4(UTF-16LE(password))` (the NT hash) |
 | EAP-TLS | file paths | no password rendered; cert/key delivered as artifacts |
 
@@ -44,7 +44,7 @@ NT hash (`MD4(UTF-16LE("password")) = 8846f7ea…`).
 ## Honesty requirement (R4)
 
 The derived forms are **still secrets**. A stolen 64-hex PSK or NT hash
-authenticates to that one network — they are *network-equivalent credentials*.
+authenticates to that one network - they are *network-equivalent credentials*.
 
 What R3 guarantees:
 1. The human-chosen passphrase/password is never disclosed (no credential-reuse
@@ -60,7 +60,7 @@ otherwise.
 - Renders are served only over HTTPS to authenticated machine tokens.
 - Responses carry `Cache-Control: no-store`.
 - On-probe placement: `wpa_supplicant_<profile>.conf` root-owned `0600`,
-  directory `/etc/wpa_supplicant` `0750` — one file per SSID profile, the
+  directory `/etc/wpa_supplicant` `0750` - one file per SSID profile, the
   name the pSSID daemon opens (see `ansible/probe-pull-example.yml` and
   `docs/integration.md`).
 
@@ -75,11 +75,11 @@ the value is shown exactly once at creation.
 Every sensitive action is appended to `audit_events` (create/view/change/rotate/
 fetch, token create/revoke, auth denials, machine pulls). Meta carries
 fingerprints and versions only; a defensive scrubber drops any secret-looking
-key. Audit is append-only — no API path updates or deletes rows.
+key. Audit is append-only - no API path updates or deletes rows.
 
 ## Backups
 
 `mongodump` output contains only encrypted payloads. Restoring it **without**
-the KEK yields nothing usable. **Back up `secrets/master.key` separately** — a
+the KEK yields nothing usable. **Back up `secrets/master.key` separately** - a
 dump plus the KEK together reconstitute all secrets, so keep them on different
 media with different access control.
