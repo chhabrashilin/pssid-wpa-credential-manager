@@ -16,6 +16,11 @@
 # render answers 304 with no body (the secret is not re-sent), the task
 # reports "ok", and a deleted or hand-edited file is simply pulled again.
 #
+# Beside each config the play leaves .credmgr.<bundle>.etag holding that
+# fingerprint. Nothing here reads it back: it is a marker for
+# pssid-probe-health, whose credmgr.sync check uses it to tell a profile the
+# credential manager delivered from one copied to the probe some other way.
+#
 #   ansible-playbook -i probes.ini probe-pull-example.yml \
 #     -e credmgr_base=https://credmgr.example.edu \
 #     -e '{"credmgr_bundles": ["eduroam", "MWireless"]}' \
@@ -68,3 +73,16 @@
       register: credmgr_pull
       changed_when: credmgr_pull.status == 200
       no_log: true
+
+    # After a 200 the fingerprint is the one the manager sent with the render;
+    # after a 304 it is the installed file's, which the manager just confirmed.
+    - name: Mark each config as delivered by the credential manager
+      ansible.builtin.copy:
+        content: "{{ item.x_render_fingerprint | default(item.item.stat.checksum[:8]) }}\n"
+        dest: "/etc/wpa_supplicant/.credmgr.{{ item.item.item }}.etag"
+        owner: root
+        group: root
+        mode: "0600"
+      loop: "{{ credmgr_pull.results }}"
+      loop_control:
+        label: "{{ item.item.item }}"

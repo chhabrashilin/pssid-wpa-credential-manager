@@ -19,6 +19,8 @@ API="$BASE/api/v1"
 J="-H Content-Type:application/json"
 NAME="probe-pull-test"
 DEST="/etc/wpa_supplicant/wpa_supplicant_${NAME}.conf"
+# The marker pssid-probe-health's credmgr.sync check looks for.
+MARKER="/etc/wpa_supplicant/.credmgr.${NAME}.etag"
 # The stack's self-signed certificate is the trust anchor for the shell helper
 # (curl reads CURL_CA_BUNDLE); this suite asserts delivery, not PKI.
 export CURL_CA_BUNDLE="${CURL_CA_BUNDLE:-$REPO_ROOT/certs/fullchain.pem}"
@@ -36,7 +38,7 @@ cleanup() {
   [[ -n "$tokid" ]] && curl -fsS -X DELETE "$API/tokens/$tokid" >/dev/null || true
   curl -fsS -X DELETE "$API/bundles/$NAME" >/dev/null || true
   curl -fsS -X DELETE "$API/networks/$NAME" >/dev/null || true
-  rm -rf "$WORK" "$DEST"
+  rm -rf "$WORK" "$DEST" "$MARKER"
 }
 trap cleanup EXIT
 
@@ -49,6 +51,8 @@ check_installed() {
   [[ "$(stat -c '%a %U %G' "$DEST")" == "600 root root" ]] || fail "$DEST is $(stat -c '%a %U %G' "$DEST"), want 600 root root"
   [[ "$(fp "$DEST")" == "$(served_fp)" ]] || fail "$DEST does not match the current render"
   grep -q '^\s*psk=[0-9a-f]\{64\}$' "$DEST" || fail "$DEST has no derived psk= line"
+  [[ "$(cat "$MARKER" 2>/dev/null)" == "$(fp "$DEST")" ]] || fail "$MARKER does not hold the installed file's fingerprint"
+  [[ "$(stat -c '%a %U %G' "$MARKER")" == "600 root root" ]] || fail "$MARKER is $(stat -c '%a %U %G' "$MARKER"), want 600 root root"
   pass "$1"
 }
 
@@ -70,9 +74,17 @@ helper | grep -q '^Installed' || fail "first pull did not install"
 check_installed "first pull installs the daemon's per-profile file"
 helper | grep -q '(304)' || fail "re-pull was not a 304"
 pass "unchanged render is a 304 no-op"
+# The marker stays behind on purpose: it must never stand in for the file.
 rm -f "$DEST"
 helper | grep -q '^Installed' || fail "deleted file was not restored"
-check_installed "deleted file is restored"
+check_installed "deleted file is restored (a leftover marker does not cause a 304)"
+rm -f "$MARKER"
+helper | grep -q '(304)' || fail "re-pull after losing the marker was not a 304"
+check_installed "a 304 puts a missing marker back"
+if CREDMGR_TOKEN="$tok" bash "$REPO_ROOT/scripts/pssid-credmgr-pull.sh" "$BASE" "../$NAME" 2>/dev/null; then
+  fail "a bundle name with a path in it was accepted"
+fi
+pass "a bundle name that is not a plain name is refused"
 echo "# local edit" >> "$DEST"
 helper | grep -q '^Installed' || fail "edited file was not replaced"
 check_installed "hand-edited file is replaced"
@@ -94,7 +106,7 @@ play() {
     || { cat "$WORK/play.log" >&2; fail "playbook failed"; }
   grep -o 'changed=[0-9]*' "$WORK/play.log" | tail -n1 | cut -d= -f2
 }
-rm -f "$DEST"
+rm -f "$DEST" "$MARKER"
 [[ "$(play)" != "0" ]] || fail "first run did not report changed"
 check_installed "first run installs the daemon's per-profile file"
 grep -q "$tok" "$WORK/play.log" && fail "token leaked into playbook output"
